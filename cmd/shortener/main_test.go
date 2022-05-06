@@ -56,6 +56,8 @@ func TestPostUrl(t *testing.T) {
 
 			response, body := testRequest(t, ts, tt.method, tt.url)
 
+			defer response.Body.Close()
+
 			assert.Equal(t, tt.want.statusCode, response.StatusCode)
 
 			if tt.want.response != "" {

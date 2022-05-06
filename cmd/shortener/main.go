@@ -1,46 +1,13 @@
 package main
 
 import (
-	"crypto/md5"
 	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"io/ioutil"
-	"net/http"
+	handlers "github.com/nastradamus39/increment_1/internal/handlers"
 )
-
-var urls = map[string]string{}
-
-// PostUrl — создает короткий урл.
-func PostUrl(w http.ResponseWriter, r *http.Request) {
-	body, _ := ioutil.ReadAll(r.Body)
-	url := string(body)
-
-	defer r.Body.Close()
-
-	h := md5.New()
-	h.Write(body)
-
-	hash := fmt.Sprintf("%x", h.Sum(nil))
-
-	urls[hash] = url
-
-	w.WriteHeader(http.StatusCreated)
-
-	w.Write([]byte(fmt.Sprintf("http://127.0.0.1:8080/%s", hash)))
-}
-
-// GetShortUrl — возвращает полный урл по короткому.
-func GetShortUrl(w http.ResponseWriter, r *http.Request) {
-	hash := chi.URLParam(r, "hash")
-
-	url := urls[hash]
-
-	w.Header().Add("Location", url)
-	w.WriteHeader(http.StatusTemporaryRedirect)
-
-	w.Write([]byte(url))
-}
 
 func main() {
 	r := router()
@@ -57,8 +24,8 @@ func router() (r *chi.Mux) {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Post("/", PostUrl)
-	r.Get("/{hash}", GetShortUrl)
+	r.Post("/", handlers.CreateShortURLHandler)
+	r.Get("/{hash}", handlers.GetShortURLHandler)
 
 	return r
 }
