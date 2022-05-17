@@ -15,18 +15,21 @@ type Config struct {
 	ServerAddress string `env:"SERVER_ADDRESS" envDefault:":8080"`
 }
 
+var Cfg Config
+
 func main() {
 	r := router()
 
-	var cfg Config
-	err := env.Parse(&cfg)
+	err := env.Parse(&Cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(fmt.Printf("Starting server on %s", cfg.ServerAddress))
+	fmt.Println(fmt.Printf("Starting server on %s", Cfg.ServerAddress))
 
-	http.ListenAndServe(cfg.ServerAddress, r)
+	handlers.BaseUrl = Cfg.BaseURL
+
+	http.ListenAndServe(Cfg.ServerAddress, r)
 }
 
 func router() (r *chi.Mux) {

@@ -4,12 +4,12 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"io/ioutil"
 	"net/http"
-	"os"
-
-	"github.com/go-chi/chi/v5"
 )
+
+var BaseUrl string
 
 var urls = map[string]string{}
 
@@ -73,7 +73,7 @@ func shortUrl(url string) (shortUrl string) {
 	h.Write([]byte(url))
 
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	shortUrl = fmt.Sprintf("%s/%x", os.Getenv("BASE_URL"), h.Sum(nil))
+	shortUrl = fmt.Sprintf("%s/%x", BaseUrl, h.Sum(nil))
 
 	urls[hash] = url
 	return

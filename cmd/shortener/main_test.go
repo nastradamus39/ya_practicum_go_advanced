@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 )
@@ -36,7 +35,7 @@ func TestPostUrl(t *testing.T) {
 			body:   strings.NewReader("http://ya.ru?x=fljdlfsdf&y=rweurowieur&z=sdkfhsdfisdf"),
 			want: want{
 				statusCode: http.StatusCreated,
-				response:   fmt.Sprintf("%s/%s", os.Getenv("BASE_URL"), "d41d8cd98f00b204e9800998ecf8427e"),
+				response:   fmt.Sprintf("%s/%s", Cfg.BaseURL, "d41d8cd98f00b204e9800998ecf8427e"),
 			},
 		},
 		{
