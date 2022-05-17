@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -18,7 +19,8 @@ func TestPostUrl(t *testing.T) {
 		statusCode int
 	}
 
-	os.Setenv("BASE_URL", "127.0.0.1")
+	//os.Setenv("SERVER_ADDRESS", "127.0.0.1:8080")
+	//os.Setenv("BASE_URL", "127.0.0.1:8080")
 
 	tests := []struct {
 		name   string
@@ -34,7 +36,7 @@ func TestPostUrl(t *testing.T) {
 			body:   strings.NewReader("http://ya.ru?x=fljdlfsdf&y=rweurowieur&z=sdkfhsdfisdf"),
 			want: want{
 				statusCode: http.StatusCreated,
-				response:   "http://127.0.0.1:8080/d41d8cd98f00b204e9800998ecf8427e",
+				response:   fmt.Sprintf("http://%s/%s", os.Getenv("SERVER_ADDRESS"), "d41d8cd98f00b204e9800998ecf8427e"),
 			},
 		},
 		{

@@ -73,7 +73,7 @@ func shortUrl(url string) (shortUrl string) {
 	h.Write([]byte(url))
 
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	shortUrl = fmt.Sprintf("http://%s:8080/%x", os.Getenv("BASE_URL"), h.Sum(nil))
+	shortUrl = fmt.Sprintf("http://%s/%x", os.Getenv("BASE_URL"), h.Sum(nil))
 
 	urls[hash] = url
 	return
