@@ -13,6 +13,7 @@ import (
 type Config struct {
 	BaseURL       string `env:"BASE_URL" envDefault:"http://127.0.0.1:8080"`
 	ServerAddress string `env:"SERVER_ADDRESS" envDefault:":8080"`
+	DbPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
 }
 
 var Cfg Config
@@ -28,6 +29,7 @@ func main() {
 	fmt.Println(fmt.Printf("Starting server on %s", Cfg.ServerAddress))
 
 	handlers.BaseUrl = Cfg.BaseURL
+	handlers.Storage, _ = handlers.NewFileStorage(Cfg.DbPath)
 
 	http.ListenAndServe(Cfg.ServerAddress, r)
 }

@@ -11,6 +11,8 @@ import (
 
 var BaseUrl string
 
+var Storage *FileStorage
+
 var urls = map[string]string{}
 
 // url для сокращения
@@ -73,14 +75,23 @@ func shortUrl(url string) (shortUrl string) {
 	h.Write([]byte(url))
 
 	hash := fmt.Sprintf("%x", h.Sum(nil))
+
+	u, _ := Storage.Find(hash)
+	fmt.Println(u)
+	if u == "" {
+		// Сохраняем на диск
+		Storage.Save(hash, url)
+	}
+
+	urls[hash] = url // сохраняем в памяти
+
 	shortUrl = fmt.Sprintf("%s/%x", BaseUrl, h.Sum(nil))
 
-	urls[hash] = url
 	return
 }
 
 // возвращает полный url по хешу
 func getUrlByHash(hash string) (url string) {
-	url = urls[hash]
+	url, _ = Storage.Find(hash)
 	return
 }
