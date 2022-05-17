@@ -18,8 +18,8 @@ func main() {
 	//os.Setenv("SERVER_ADDRESS", "127.0.0.1:8080")
 	//os.Setenv("BASE_URL", "http://127.0.0.1:8080")
 
-	os.Setenv("SERVER_HOST", "127.0.0.1")
-	os.Setenv("SERVER_PORT", "8080")
+	//os.Setenv("SERVER_HOST", "127.0.0.1")
+	//os.Setenv("SERVER_PORT", "8080")
 
 	serverAddr := fmt.Sprintf("%s:%s", os.Getenv("SERVER_HOST"), os.Getenv("SERVER_PORT"))
 
