@@ -36,7 +36,7 @@ func TestPostUrl(t *testing.T) {
 			body:   strings.NewReader("http://ya.ru?x=fljdlfsdf&y=rweurowieur&z=sdkfhsdfisdf"),
 			want: want{
 				statusCode: http.StatusCreated,
-				response:   fmt.Sprintf("http://%s:8080/%s", os.Getenv("SERVER_ADDRESS"), "d41d8cd98f00b204e9800998ecf8427e"),
+				response:   fmt.Sprintf("http://127.0.0.1:%s/%s", os.Getenv("SERVER_ADDRESS"), "d41d8cd98f00b204e9800998ecf8427e"),
 			},
 		},
 		{

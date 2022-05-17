@@ -18,7 +18,7 @@ func main() {
 
 	fmt.Println(fmt.Printf("Starting server on %s", os.Getenv("SERVER_ADDRESS")))
 
-	http.ListenAndServe(fmt.Sprintf("%s:8080", os.Getenv("SERVER_ADDRESS")), r)
+	http.ListenAndServe(fmt.Sprintf("127.0.0.1:%s", os.Getenv("SERVER_ADDRESS")), r)
 }
 
 func router() (r *chi.Mux) {
