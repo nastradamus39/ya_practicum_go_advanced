@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +11,33 @@ import (
 )
 
 var urls = map[string]string{}
+
+// url для сокращения
+type url struct {
+	Url string `json:"url"`
+}
+
+// Сокращенный url
+type response struct {
+	Url string `json:"result"`
+}
+
+// ApiCreateShortURLHandler создает короткий урл
+func ApiCreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
+	url := url{}
+
+	if err := json.NewDecoder(r.Body).Decode(&url); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	url.Url = shortUrl(url.Url)
+
+	resp, _ := json.Marshal(response(url))
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write(resp)
+}
 
 // CreateShortURLHandler — создает короткий урл.
 func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,4 +68,10 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 
 	w.Write([]byte(url))
+}
+
+// shortUrl сокращает переданный url
+func shortUrl(url string) (shortUrl string) {
+	h := md5.New()
+	return fmt.Sprintf("http://127.0.0.1:8080/%x", h.Sum(nil))
 }

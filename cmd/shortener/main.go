@@ -25,6 +25,7 @@ func router() (r *chi.Mux) {
 	r.Use(middleware.Recoverer)
 
 	r.Post("/", handlers.CreateShortURLHandler)
+	r.Post("/api/shorten", handlers.ApiCreateShortURLHandler)
 	r.Get("/{hash}", handlers.GetShortURLHandler)
 
 	return r
