@@ -17,7 +17,7 @@ func main() {
 	// export BASE_URL='http://127.0.0.1:8080'
 	fmt.Println(fmt.Printf("Starting server on %s", os.Getenv("SERVER_ADDRESS")))
 
-	http.ListenAndServe(os.Getenv("SERVER_ADDRESS"), r)
+	http.ListenAndServe(fmt.Sprintf("%s:8080", os.Getenv("SERVER_ADDRESS")), r)
 }
 
 func router() (r *chi.Mux) {
