@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -16,6 +17,8 @@ func TestPostUrl(t *testing.T) {
 		response   string
 		statusCode int
 	}
+
+	os.Setenv("BASE_URL", "127.0.0.1")
 
 	tests := []struct {
 		name   string
