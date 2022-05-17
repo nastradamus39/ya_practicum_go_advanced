@@ -35,6 +35,7 @@ func ApiCreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp, _ := json.Marshal(response(url))
 
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
 }
