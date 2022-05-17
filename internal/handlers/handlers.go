@@ -63,6 +63,8 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	url := getUrlByHash(hash)
 
+	fmt.Println(fmt.Sprintf("Redirec to ur - %s", url))
+
 	w.Header().Add("Location", url)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 
@@ -77,7 +79,6 @@ func shortUrl(url string) (shortUrl string) {
 	hash := fmt.Sprintf("%x", h.Sum(nil))
 
 	u, _ := Storage.Find(hash)
-	fmt.Println(u)
 	if u == "" {
 		// Сохраняем на диск
 		Storage.Save(hash, url)
@@ -93,5 +94,6 @@ func shortUrl(url string) (shortUrl string) {
 // возвращает полный url по хешу
 func getUrlByHash(hash string) (url string) {
 	url, _ = Storage.Find(hash)
-	return
+
+	return url
 }
