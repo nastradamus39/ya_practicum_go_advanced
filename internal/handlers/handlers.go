@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -72,7 +73,7 @@ func shortUrl(url string) (shortUrl string) {
 	h.Write([]byte(url))
 
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	shortUrl = fmt.Sprintf("http://127.0.0.1:8080/%x", h.Sum(nil))
+	shortUrl = fmt.Sprintf("%s/%x", os.Getenv("BASE_URL"), h.Sum(nil))
 
 	urls[hash] = url
 	return

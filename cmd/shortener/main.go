@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -12,8 +13,11 @@ import (
 func main() {
 	r := router()
 
-	fmt.Println("Starting server on :8080")
-	http.ListenAndServe("127.0.0.1:8080", r)
+	// export SERVER_ADDRESS='127.0.0.1:8080'
+	// export BASE_URL='http://127.0.0.1:8080'
+	fmt.Println(fmt.Printf("Starting server on %s", os.Getenv("SERVER_ADDRESS")))
+
+	http.ListenAndServe(os.Getenv("SERVER_ADDRESS"), r)
 }
 
 func router() (r *chi.Mux) {
