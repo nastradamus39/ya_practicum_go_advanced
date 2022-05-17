@@ -36,6 +36,7 @@ func ApiCreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	resp, _ := json.Marshal(response(url))
 
 	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Accept", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
 }
@@ -43,27 +44,21 @@ func ApiCreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 // CreateShortURLHandler — создает короткий урл.
 func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
-	url := string(body)
 
 	defer r.Body.Close()
 
-	h := md5.New()
-	h.Write(body)
-
-	hash := fmt.Sprintf("%x", h.Sum(nil))
-
-	urls[hash] = url
+	sUrl := shortUrl(string(body))
 
 	w.WriteHeader(http.StatusCreated)
 
-	w.Write([]byte(fmt.Sprintf("http://127.0.0.1:8080/%s", hash)))
+	w.Write([]byte(sUrl))
 }
 
 // GetShortURLHandler — возвращает полный урл по короткому.
 func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 
-	url := urls[hash]
+	url := getUrlByHash(hash)
 
 	w.Header().Add("Location", url)
 	w.WriteHeader(http.StatusTemporaryRedirect)
@@ -71,8 +66,20 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(url))
 }
 
-// shortUrl сокращает переданный url
+// shortUrl сокращает переданный url, сохраняет, возвращает короткую ссылку
 func shortUrl(url string) (shortUrl string) {
 	h := md5.New()
-	return fmt.Sprintf("http://127.0.0.1:8080/%x", h.Sum(nil))
+	h.Write([]byte(url))
+
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	shortUrl = fmt.Sprintf("http://127.0.0.1:8080/%x", h.Sum(nil))
+
+	urls[hash] = url
+	return
+}
+
+// возвращает полный url по хешу
+func getUrlByHash(hash string) (url string) {
+	url = urls[hash]
+	return
 }
