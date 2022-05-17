@@ -38,10 +38,12 @@ func TestPostUrl(t *testing.T) {
 			name:   "Получение короткой ссылки по полной",
 			url:    "/api/shorten",
 			method: http.MethodPost,
-			body:   strings.NewReader("{\"url\": \"http://ya.ru/sadasda123123123\"}"),
+			body:   strings.NewReader(`{"url": "http://ya.ru/sadasda123123123"}`),
 			want: want{
 				statusCode: http.StatusCreated,
-				response:   "{\"result\":\"http://127.0.0.1:8080/d41d8cd98f00b204e9800998ecf8427e\"}",
+				response: `{
+    "result": "http://127.0.0.1:8080/d41d8cd98f00b204e9800998ecf8427e"
+}`,
 			},
 		},
 		{

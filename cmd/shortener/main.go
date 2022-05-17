@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	handlers "github.com/nastradamus39/increment_1/internal/handlers"
+	handlers "github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
 )
 
 func main() {
