@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	handlers "github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
+	middlewares "github.com/nastradamus39/ya_practicum_go_advanced/internal/middleware"
 	"log"
 	"net/http"
 )
@@ -41,6 +42,8 @@ func router() (r *chi.Mux) {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(5))
+	r.Use(middlewares.Decompress)
 
 	r.Post("/", handlers.CreateShortURLHandler)
 	r.Post("/api/shorten", handlers.ApiCreateShortURLHandler)
