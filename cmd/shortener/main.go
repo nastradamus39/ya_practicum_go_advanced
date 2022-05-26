@@ -13,9 +13,9 @@ import (
 )
 
 type Config struct {
-	BaseURL       string `env:"BASE_URL" envDefault:"http://127.0.0.1:8080"`
+	BaseURL       string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	ServerPort    string `env:"SERVER_PORT" envDefault:"8080"`
-	ServerAddress string `env:"SERVER_HOST" envDefault:"localhost"`
+	ServerAddress string `env:"SERVER_ADDRESS" envDefault:"localhost:8080"`
 	DbPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
 }
 
@@ -31,17 +31,19 @@ func main() {
 
 	flag.StringVar(&Cfg.ServerAddress, "server-host", Cfg.ServerAddress, "Базовый урл для коротких ссылок")
 	flag.StringVar(&Cfg.ServerPort, "server-port", Cfg.ServerPort, "Порт сервера")
-	flag.StringVar(&Cfg.BaseURL, "server-base", Cfg.BaseURL, "Адрес для запуска сервера")
+	flag.StringVar(&Cfg.BaseURL, "server-base-url", Cfg.BaseURL, "Адрес для запуска сервера")
 	flag.StringVar(&Cfg.DbPath, "file-storage-path", Cfg.DbPath, "Путь к файлу с ссылками")
 	flag.Parse()
 
-	serverAddr := fmt.Sprintf("%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
-	bseUrl := fmt.Sprintf("http://%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
+	//serverAddr := fmt.Sprintf("%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
+	serverAddr := Cfg.ServerAddress
+	//bseUrl := fmt.Sprintf("http://%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
+	baseUrl := Cfg.BaseURL
 
 	fmt.Println(fmt.Printf("Starting server on %s", serverAddr))
-	fmt.Println(fmt.Printf("Base url %s", bseUrl))
+	fmt.Println(fmt.Printf("Base url %s", baseUrl))
 
-	handlers.BaseUrl = bseUrl
+	handlers.BaseUrl = baseUrl
 	handlers.Storage, _ = handlers.NewFileStorage(Cfg.DbPath)
 
 	http.ListenAndServe(serverAddr, r)
