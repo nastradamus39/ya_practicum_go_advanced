@@ -32,7 +32,7 @@ func main() {
 	serverAddr := fmt.Sprintf("%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
 	fmt.Println(fmt.Printf("Starting server on %s", serverAddr))
 
-	handlers.BaseUrl = Cfg.BaseURL
+	handlers.BaseUrl = fmt.Sprintf("http://%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
 	handlers.Storage, _ = handlers.NewFileStorage(Cfg.DbPath)
 
 	http.ListenAndServe(serverAddr, r)
