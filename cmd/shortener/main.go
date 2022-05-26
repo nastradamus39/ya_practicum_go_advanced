@@ -29,15 +29,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	flag.StringVar(&Cfg.ServerAddress, "server-host", Cfg.ServerAddress, "Базовый урл для коротких ссылок")
+	flag.StringVar(&Cfg.ServerAddress, "a", Cfg.ServerAddress, "Адрес для запуска сервера")
 	flag.StringVar(&Cfg.ServerPort, "server-port", Cfg.ServerPort, "Порт сервера")
-	flag.StringVar(&Cfg.BaseURL, "server-base-url", Cfg.BaseURL, "Адрес для запуска сервера")
+	flag.StringVar(&Cfg.BaseURL, "b", Cfg.BaseURL, "Базовый адрес результирующего сокращённого URL")
 	flag.StringVar(&Cfg.DbPath, "file-storage-path", Cfg.DbPath, "Путь к файлу с ссылками")
 	flag.Parse()
 
-	//serverAddr := fmt.Sprintf("%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
 	serverAddr := Cfg.ServerAddress
-	//bseUrl := fmt.Sprintf("http://%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
 	baseUrl := Cfg.BaseURL
 
 	fmt.Println(fmt.Printf("Starting server on %s", serverAddr))
