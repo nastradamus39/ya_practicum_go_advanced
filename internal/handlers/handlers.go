@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-var BaseUrl string
+var BaseURL string
 
 var Storage *FileStorage
 
@@ -17,16 +17,16 @@ var urls = map[string]string{}
 
 // url для сокращения
 type url struct {
-	Url string `json:"url"`
+	URL string `json:"url"`
 }
 
 // Сокращенный url
 type response struct {
-	Url string `json:"result"`
+	URL string `json:"result"`
 }
 
-// ApiCreateShortURLHandler создает короткий урл
-func ApiCreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
+// APICreateShortURLHandler создает короткий урл
+func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	url := url{}
 
 	if err := json.NewDecoder(r.Body).Decode(&url); err != nil {
@@ -34,7 +34,7 @@ func ApiCreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url.Url = shortUrl(url.Url)
+	url.URL = shortURL(url.URL)
 
 	resp, _ := json.Marshal(response(url))
 
@@ -50,21 +50,21 @@ func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	sUrl := shortUrl(string(body))
+	sURL := shortURL(string(body))
 
 	w.WriteHeader(http.StatusCreated)
 
-	w.Write([]byte(sUrl))
+	w.Write([]byte(sURL))
 }
 
 // GetShortURLHandler — возвращает полный урл по короткому.
 func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 
-	u, err := getUrlByHash(hash)
+	u, err := getURLByHash(hash)
 
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Cannot find full url. Error - %s", err))
+		fmt.Printf("Cannot find full url. Error - %s", err)
 	}
 
 	w.Header().Add("Location", u)
@@ -73,8 +73,8 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(u))
 }
 
-// shortUrl сокращает переданный url, сохраняет, возвращает короткую ссылку
-func shortUrl(url string) (shortUrl string) {
+// shortURL сокращает переданный url, сохраняет, возвращает короткую ссылку
+func shortURL(url string) (shortURL string) {
 	h := md5.New()
 	h.Write([]byte(url))
 
@@ -88,13 +88,13 @@ func shortUrl(url string) (shortUrl string) {
 
 	urls[hash] = url // сохраняем в памяти
 
-	shortUrl = fmt.Sprintf("%s/%x", BaseUrl, h.Sum(nil))
+	shortURL = fmt.Sprintf("%s/%x", BaseURL, h.Sum(nil))
 
 	return
 }
 
 // возвращает полный url по хешу
-func getUrlByHash(hash string) (url string, err error) {
+func getURLByHash(hash string) (url string, err error) {
 	// Ищем в памяти
 	u := urls[hash]
 	if u != "" {
@@ -105,5 +105,5 @@ func getUrlByHash(hash string) (url string, err error) {
 	if u == "" {
 		u, err = Storage.Find(hash)
 	}
-	return url, err
+	return u, err
 }

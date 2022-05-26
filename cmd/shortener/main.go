@@ -16,7 +16,7 @@ type Config struct {
 	BaseURL       string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	ServerPort    string `env:"SERVER_PORT" envDefault:"8080"`
 	ServerAddress string `env:"SERVER_ADDRESS" envDefault:"localhost:8080"`
-	DbPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
+	DBPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
 }
 
 var Cfg Config
@@ -32,7 +32,7 @@ func main() {
 	flag.StringVar(&Cfg.ServerAddress, "a", Cfg.ServerAddress, "Адрес для запуска сервера")
 	flag.StringVar(&Cfg.ServerPort, "server-port", Cfg.ServerPort, "Порт сервера")
 	flag.StringVar(&Cfg.BaseURL, "b", Cfg.BaseURL, "Базовый адрес результирующего сокращённого URL")
-	flag.StringVar(&Cfg.DbPath, "f", Cfg.DbPath, "Путь к файлу с ссылками")
+	flag.StringVar(&Cfg.DBPath, "f", Cfg.DBPath, "Путь к файлу с ссылками")
 	flag.Parse()
 
 	serverAddr := Cfg.ServerAddress
@@ -41,8 +41,8 @@ func main() {
 	fmt.Println(fmt.Printf("Starting server on %s", serverAddr))
 	fmt.Println(fmt.Printf("Base url %s", baseUrl))
 
-	handlers.BaseUrl = baseUrl
-	handlers.Storage, _ = handlers.NewFileStorage(Cfg.DbPath)
+	handlers.BaseURL = baseUrl
+	handlers.Storage, _ = handlers.NewFileStorage(Cfg.DBPath)
 
 	http.ListenAndServe(serverAddr, r)
 }
@@ -58,7 +58,7 @@ func router() (r *chi.Mux) {
 	r.Use(middlewares.Decompress)
 
 	r.Post("/", handlers.CreateShortURLHandler)
-	r.Post("/api/shorten", handlers.ApiCreateShortURLHandler)
+	r.Post("/api/shorten", handlers.APICreateShortURLHandler)
 	r.Get("/{hash}", handlers.GetShortURLHandler)
 
 	return r

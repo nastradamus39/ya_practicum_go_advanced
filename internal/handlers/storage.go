@@ -100,7 +100,7 @@ func (f *FileStorage) Find(hash string) (link string, err error) {
 
 	_, err = f.storageReader.file.Seek(0, io.SeekStart)
 	if err != nil {
-		fmt.Println(fmt.Sprintf("Ошибка при установке указателя в бд - %s", err))
+		fmt.Printf("Ошибка при установке указателя в бд - %s\n", err)
 		return "", err
 	}
 
@@ -108,7 +108,7 @@ func (f *FileStorage) Find(hash string) (link string, err error) {
 		item, err := f.storageReader.Read()
 
 		if err != nil {
-			fmt.Println(fmt.Sprintf("Ошибка при чтении из бд - %s", err))
+			fmt.Printf("Ошибка при чтении из бд - %s\n", err)
 			return "", err
 		}
 

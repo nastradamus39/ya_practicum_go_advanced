@@ -47,7 +47,7 @@ func TestPostUrl(t *testing.T) {
 	}
 
 	handlers.Storage, _ = handlers.NewFileStorage("./db_test")
-	handlers.BaseUrl = "http://127.0.0.1:8080"
+	handlers.BaseURL = "http://127.0.0.1:8080"
 
 	r := router()
 	ts := httptest.NewServer(r)
