@@ -13,9 +13,9 @@ import (
 )
 
 type Config struct {
-	BaseURL       string `env:"BASE_URL" envDefault:"http://localhost:8080"`
+	BaseURL       string `env:"BASE_URL" envDefault:"http://127.0.0.1:8080"`
 	ServerPort    string `env:"SERVER_PORT" envDefault:"8080"`
-	ServerAddress string `env:"SERVER_HOST" envDefault:"localhost"`
+	ServerAddress string `env:"SERVER_HOST" envDefault:"127.0.0.1"`
 	DbPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
 }
 
@@ -30,9 +30,12 @@ func main() {
 	}
 
 	serverAddr := fmt.Sprintf("%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
-	fmt.Println(fmt.Printf("Starting server on %s", serverAddr))
+	bseUrl := fmt.Sprintf("http://%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
 
-	handlers.BaseUrl = fmt.Sprintf("http://%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
+	fmt.Println(fmt.Printf("Starting server on %s", serverAddr))
+	fmt.Println(fmt.Printf("Base url %s", bseUrl))
+
+	handlers.BaseUrl = bseUrl
 	handlers.Storage, _ = handlers.NewFileStorage(Cfg.DbPath)
 
 	http.ListenAndServe(serverAddr, r)
