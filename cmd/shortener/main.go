@@ -36,12 +36,12 @@ func main() {
 	flag.Parse()
 
 	serverAddr := Cfg.ServerAddress
-	baseUrl := Cfg.BaseURL
+	baseURL := Cfg.BaseURL
 
 	fmt.Println(fmt.Printf("Starting server on %s", serverAddr))
-	fmt.Println(fmt.Printf("Base url %s", baseUrl))
+	fmt.Println(fmt.Printf("Base url %s", baseURL))
 
-	handlers.BaseURL = baseUrl
+	handlers.BaseURL = baseURL
 	handlers.Storage, _ = handlers.NewFileStorage(Cfg.DBPath)
 
 	http.ListenAndServe(serverAddr, r)
