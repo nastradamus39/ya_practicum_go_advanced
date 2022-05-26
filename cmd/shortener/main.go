@@ -1,21 +1,21 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
-	"net/http"
-
 	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	handlers "github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
 	middlewares "github.com/nastradamus39/ya_practicum_go_advanced/internal/middleware"
+	"log"
+	"net/http"
 )
 
 type Config struct {
 	BaseURL       string `env:"BASE_URL" envDefault:"http://127.0.0.1:8080"`
 	ServerPort    string `env:"SERVER_PORT" envDefault:"8080"`
-	ServerAddress string `env:"SERVER_HOST" envDefault:"127.0.0.1"`
+	ServerAddress string `env:"SERVER_HOST" envDefault:"localhost"`
 	DbPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
 }
 
@@ -28,6 +28,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	flag.StringVar(&Cfg.ServerAddress, "server-host", Cfg.ServerAddress, "Базовый урл для коротких ссылок")
+	flag.StringVar(&Cfg.ServerPort, "server-port", Cfg.ServerPort, "Порт сервера")
+	flag.StringVar(&Cfg.BaseURL, "server-base", Cfg.BaseURL, "Адрес для запуска сервера")
+	flag.StringVar(&Cfg.DbPath, "file-storage-path", Cfg.DbPath, "Путь к файлу с ссылками")
+	flag.Parse()
 
 	serverAddr := fmt.Sprintf("%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
 	bseUrl := fmt.Sprintf("http://%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
