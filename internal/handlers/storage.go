@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -99,12 +100,15 @@ func (f *FileStorage) Find(hash string) (link string, err error) {
 
 	_, err = f.storageReader.file.Seek(0, io.SeekStart)
 	if err != nil {
+		fmt.Println(fmt.Sprintf("Ошибка при установке указателя в бд - %s", err))
 		return "", err
 	}
 
 	for {
 		item, err := f.storageReader.Read()
+
 		if err != nil {
+			fmt.Println(fmt.Sprintf("Ошибка при чтении из бд - %s", err))
 			return "", err
 		}
 

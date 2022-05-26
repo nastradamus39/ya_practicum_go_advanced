@@ -61,14 +61,16 @@ func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 
-	url := getUrlByHash(hash)
+	u, err := getUrlByHash(hash)
 
-	fmt.Println(fmt.Sprintf("Redirec to ur - %s", url))
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Cannot find full url. Error - %s", err))
+	}
 
-	w.Header().Add("Location", url)
+	w.Header().Add("Location", u)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 
-	w.Write([]byte(url))
+	w.Write([]byte(u))
 }
 
 // shortUrl сокращает переданный url, сохраняет, возвращает короткую ссылку
@@ -92,8 +94,16 @@ func shortUrl(url string) (shortUrl string) {
 }
 
 // возвращает полный url по хешу
-func getUrlByHash(hash string) (url string) {
-	url, _ = Storage.Find(hash)
+func getUrlByHash(hash string) (url string, err error) {
+	// Ищем в памяти
+	u := urls[hash]
+	if u != "" {
+		return u, nil
+	}
 
-	return url
+	// Если в памяти нет - ищем в файле
+	if u == "" {
+		u, err = Storage.Find(hash)
+	}
+	return url, err
 }

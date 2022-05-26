@@ -2,18 +2,20 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	handlers "github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
 	middlewares "github.com/nastradamus39/ya_practicum_go_advanced/internal/middleware"
-	"log"
-	"net/http"
 )
 
 type Config struct {
 	BaseURL       string `env:"BASE_URL" envDefault:"http://127.0.0.1:8080"`
-	ServerAddress string `env:"SERVER_ADDRESS" envDefault:":8080"`
+	ServerAddress string `env:"SERVER_HOST" envDefault:"127.0.0.1"`
+	ServerPort    string `env:"SERVER_PORT" envDefault:"8080"`
 	DbPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
 }
 
