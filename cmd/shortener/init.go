@@ -9,8 +9,7 @@ import (
 
 func init() {
 	pflag.StringP("server-base-url", "b", "http://localhost:8080/", "Базовый урл для коротких ссылок")
-	pflag.StringP("server-host", "a", "127.0.0.1", "Адрес для запуска сервера")
-	pflag.StringP("server-port", "p", ":8080", "Порт для запуска сервера")
+	pflag.StringP("server-host", "a", "localhost", "Адрес для запуска сервера")
 	pflag.StringP("file-storage-path", "f", "", "Путь к файлу с ссылками")
 	pflag.Parse()
 

@@ -32,7 +32,7 @@ func TestPostUrl(t *testing.T) {
 			body:   strings.NewReader("http://ya.ru?x=fljdlfsdf&y=rweurowieur&z=sdkfhsdfisdf"),
 			want: want{
 				statusCode: http.StatusCreated,
-				response:   "http://127.0.0.1:8080/d41d8cd98f00b204e9800998ecf8427e",
+				response:   "http://localhost:8080/d41d8cd98f00b204e9800998ecf8427e",
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func TestPostUrl(t *testing.T) {
 	}
 
 	handlers.Storage, _ = handlers.NewFileStorage("./db_test")
-	handlers.BaseUrl = "http://127.0.0.1:8080"
+	handlers.BaseUrl = "http://localhost:8080"
 
 	r := router()
 	ts := httptest.NewServer(r)

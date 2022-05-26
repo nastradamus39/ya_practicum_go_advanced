@@ -13,9 +13,9 @@ import (
 )
 
 type Config struct {
-	BaseURL       string `env:"BASE_URL" envDefault:"http://127.0.0.1:8080"`
-	ServerAddress string `env:"SERVER_HOST" envDefault:"127.0.0.1"`
+	BaseURL       string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	ServerPort    string `env:"SERVER_PORT" envDefault:"8080"`
+	ServerAddress string `env:"SERVER_HOST" envDefault:"localhost"`
 	DbPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
 }
 
@@ -29,12 +29,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(fmt.Printf("Starting server on %s", Cfg.ServerAddress))
+	serverAddr := fmt.Sprintf("%s:%s", Cfg.ServerAddress, Cfg.ServerPort)
+	fmt.Println(fmt.Printf("Starting server on %s", serverAddr))
 
 	handlers.BaseUrl = Cfg.BaseURL
 	handlers.Storage, _ = handlers.NewFileStorage(Cfg.DbPath)
 
-	http.ListenAndServe(Cfg.ServerAddress, r)
+	http.ListenAndServe(serverAddr, r)
 }
 
 func router() (r *chi.Mux) {
