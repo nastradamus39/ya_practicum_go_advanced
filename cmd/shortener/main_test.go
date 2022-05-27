@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -45,8 +46,12 @@ func TestPostUrl(t *testing.T) {
 		},
 	}
 
+	handlers.Storage, _ = handlers.NewFileStorage("./db_test")
+	handlers.BaseURL = "http://127.0.0.1:8080"
+
 	r := router()
 	ts := httptest.NewServer(r)
+
 	defer ts.Close()
 
 	for _, tt := range tests {
