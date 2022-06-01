@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middleware"
 	"io/ioutil"
 	"net/http"
 )
@@ -13,7 +14,7 @@ var BaseURL string
 
 var Storage *FileStorage
 
-var urls = map[string]string{}
+var Urls = map[string]map[string]string{}
 
 // url для сокращения
 type url struct {
@@ -60,8 +61,26 @@ func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 // GetShortURLHandler — возвращает полный урл по короткому.
 func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
+	uuid := middleware.UserSignedCookie.Uuid
 
-	u, err := getURLByHash(hash)
+	u, err := getURLByHash(uuid, hash)
+
+	if err != nil {
+		fmt.Printf("Cannot find full url. Error - %s", err)
+	}
+
+	w.Header().Add("Location", u)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+
+	w.Write([]byte(u))
+}
+
+// GetUserURLSHandler — возвращает все сокращенные урлы пользователя.
+func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
+	hash := chi.URLParam(r, "hash")
+	uuid := middleware.UserSignedCookie.Uuid
+
+	u, err := getURLByHash(uuid, hash)
 
 	if err != nil {
 		fmt.Printf("Cannot find full url. Error - %s", err)
@@ -79,6 +98,9 @@ func shortURL(url string) (shortURL string) {
 	h.Write([]byte(url))
 
 	hash := fmt.Sprintf("%x", h.Sum(nil))
+	uuid := middleware.UserSignedCookie.Uuid
+
+	fmt.Printf("Текущий uuid - %s\n", uuid)
 
 	u, _ := Storage.Find(hash)
 	if u == "" {
@@ -86,24 +108,33 @@ func shortURL(url string) (shortURL string) {
 		Storage.Save(hash, url)
 	}
 
-	urls[hash] = url // сохраняем в памяти
+	if Urls[uuid] == nil {
+		Urls[uuid] = map[string]string{}
+	}
+
+	Urls[uuid][hash] = url // сохраняем в памяти
 
 	shortURL = fmt.Sprintf("%s/%x", BaseURL, h.Sum(nil))
+
+	fmt.Printf("Urls -%s", Urls)
 
 	return
 }
 
 // возвращает полный url по хешу
-func getURLByHash(hash string) (url string, err error) {
-	// Ищем в памяти
-	u := urls[hash]
-	if u != "" {
-		return u, nil
-	}
+func getURLByHash(uuid string, hash string) (url string, err error) {
+	//// Ищем в памяти
+	u := Urls[uuid][hash]
 
-	// Если в памяти нет - ищем в файле
-	if u == "" {
-		u, err = Storage.Find(hash)
-	}
-	return u, err
+	//if u != "" {
+	//	return u, nil
+	//}
+	//
+	//// Если в памяти нет - ищем в файле
+	//if u == "" {
+	//	u, err = Storage.Find(hash)
+	//}
+	//return u, err
+
+	return u, nil
 }

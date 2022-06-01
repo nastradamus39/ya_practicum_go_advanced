@@ -80,11 +80,11 @@ func (c *reader) Close() error {
 }
 
 // Save - сохраняет ID и ссылку в файле
-func (f *FileStorage) Save(hash string, url string) error {
+func (f *FileStorage) Save(hash string, url string, uuid string) error {
 	f.mx.Lock()
 	defer f.mx.Unlock()
 
-	a := Item{Hash: hash, URL: url}
+	a := Item{Hash: hash, URL: url, Uuid: uuid}
 	err := f.storageWriter.Write(&a)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (f *FileStorage) Save(hash string, url string) error {
 }
 
 // Find ищет в файле ссылку
-func (f *FileStorage) Find(hash string) (link string, err error) {
+func (f *FileStorage) Find(hash string, uuid string) (link string, err error) {
 	f.mx.Lock()
 	defer f.mx.Unlock()
 
@@ -122,4 +122,5 @@ func (f *FileStorage) Find(hash string) (link string, err error) {
 type Item struct {
 	Hash string
 	URL  string
+	Uuid string
 }
