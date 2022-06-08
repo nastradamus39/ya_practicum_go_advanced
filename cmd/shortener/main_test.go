@@ -1,15 +1,17 @@
 package main
 
 import (
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPostUrl(t *testing.T) {
@@ -46,8 +48,8 @@ func TestPostUrl(t *testing.T) {
 		},
 	}
 
-	handlers.Storage, _ = handlers.NewFileStorage("./db_test")
-	handlers.BaseURL = "http://127.0.0.1:8080"
+	app.Storage, _ = storage.NewFileStorage("./db_test")
+	//app.Cfg = "http://127.0.0.1:8080"
 
 	r := router()
 	ts := httptest.NewServer(r)
