@@ -22,11 +22,9 @@ var UserSignedCookie SignedCookie
 func UserCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		currentCookie, err := r.Cookie(cookieName)
-		fmt.Printf("Текущее значение куки %s - %s\n", cookieName, currentCookie)
 
 		// Если куки нет - создаем новую, подписываем, назначаем
 		if errors.Is(err, http.ErrNoCookie) {
-			fmt.Printf("Нет куки. Создаем новую.\n")
 			sc, _ := NewSignedCookie()
 			sc.Sign() // подписываем
 			http.SetCookie(w, sc.Cookie)
@@ -36,14 +34,11 @@ func UserCookie(next http.Handler) http.Handler {
 			sc := SignedCookie{}
 			sc.Cookie = currentCookie
 
-			fmt.Printf("Валидируем существующую куку\n")
-
 			err := sc.Validate()
 			if err != nil {
 				// Кука не валидна. Подписываем снова
 				sc.Sign()
 				http.SetCookie(w, sc.Cookie)
-				fmt.Printf("Новая подписанная кука - %s\n", sc.signedValue)
 			}
 			UserSignedCookie = sc
 		}
@@ -115,10 +110,8 @@ func (sc *SignedCookie) Validate() (err error) {
 	sc.sign = cookieParts[1]
 
 	if sc.sign == sc.CalcSign(sc.clearValue) {
-		fmt.Printf("Кука валидна\n")
 		return nil
 	} else {
-		fmt.Printf("Кука не валидна\n")
 		return errors.New("кука не валидна")
 	}
 }

@@ -82,6 +82,12 @@ func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 	uuid := middlewares.UserSignedCookie.Uuid
 
 	urls := app.GetUrlsByUuid(uuid)
+	if len(urls) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		w.Write([]byte(""))
+		return
+	}
+
 	resp := make([]userUrl, 0, len(urls))
 
 	for _, url := range urls {
@@ -95,5 +101,7 @@ func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Accept", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	w.Write(respString)
 }
