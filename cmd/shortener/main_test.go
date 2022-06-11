@@ -41,6 +41,7 @@ func setup() {
 func TestPostUrl(t *testing.T) {
 	setup()
 	defer S.Server.Close()
+	defer app.Storage.Drop()
 
 	type want struct {
 		response   string

@@ -8,10 +8,10 @@ type Config struct {
 	DBPath        string `env:"FILE_STORAGE_PATH" envDefault:"./db"`
 }
 
-// Url - структура для url
-type Url struct {
-	Uuid     string
+// URL - структура для url
+type URL struct {
+	UUID     string
 	Hash     string
 	URL      string
-	ShortUrl string
+	ShortURL string
 }

@@ -7,18 +7,18 @@ import (
 )
 
 type MemoryRepository struct {
-	items map[string]*types.Url
+	items map[string]*types.URL
 }
 
 func NewMemoryRepository() *MemoryRepository {
 	return &MemoryRepository{
-		items: map[string]*types.Url{},
+		items: map[string]*types.URL{},
 	}
 }
 
-func (r *MemoryRepository) Save(url *types.Url) error {
+func (r *MemoryRepository) Save(url *types.URL) error {
 	h := md5.New()
-	h.Write([]byte(fmt.Sprintf("%s_%s", url.Uuid, url.URL)))
+	h.Write([]byte(fmt.Sprintf("%s_%s", url.UUID, url.URL)))
 
 	key := fmt.Sprintf("%x", h.Sum(nil))
 
@@ -27,7 +27,7 @@ func (r *MemoryRepository) Save(url *types.Url) error {
 	return nil
 }
 
-func (r *MemoryRepository) FindByHash(hash string) (exist bool, url *types.Url, err error) {
+func (r *MemoryRepository) FindByHash(hash string) (exist bool, url *types.URL, err error) {
 	exist = false
 	url = nil
 	err = nil
@@ -42,12 +42,12 @@ func (r *MemoryRepository) FindByHash(hash string) (exist bool, url *types.Url, 
 	return
 }
 
-func (r *MemoryRepository) FindByUuid(uuid string) (urls map[string]*types.Url, err error) {
-	urls = map[string]*types.Url{}
+func (r *MemoryRepository) FindByUUID(uuid string) (urls map[string]*types.URL, err error) {
+	urls = map[string]*types.URL{}
 	err = nil
 
 	for _, item := range r.items {
-		if item.Uuid == uuid {
+		if item.UUID == uuid {
 			urls[item.Hash] = item
 		}
 	}

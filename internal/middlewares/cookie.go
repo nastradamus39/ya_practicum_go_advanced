@@ -52,7 +52,7 @@ func NewSignedCookie() (_sc SignedCookie, err error) {
 	_sc.key = []byte("key")
 
 	_sc.clearValue = uuid.New().String()
-	_sc.Uuid = _sc.clearValue
+	_sc.UUID = _sc.clearValue
 	_sc.sign = _sc.CalcSign(_sc.clearValue)
 
 	_sc.Cookie = &http.Cookie{
@@ -73,7 +73,7 @@ type SignedCookie struct {
 	key         []byte
 	signedValue string
 	clearValue  string
-	Uuid        string
+	UUID        string
 	sign        string
 }
 
@@ -106,7 +106,7 @@ func (sc *SignedCookie) Validate() (err error) {
 	cookieParts := strings.Split(sc.Value, "|")
 
 	sc.clearValue = cookieParts[0]
-	sc.Uuid = sc.clearValue
+	sc.UUID = sc.clearValue
 	sc.sign = cookieParts[1]
 
 	if sc.sign == sc.CalcSign(sc.clearValue) {

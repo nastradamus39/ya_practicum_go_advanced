@@ -48,7 +48,7 @@ type writer struct {
 	encoder *json.Encoder
 }
 
-func (p *writer) Write(url *types.Url) error {
+func (p *writer) Write(url *types.URL) error {
 	return p.encoder.Encode(&url)
 }
 
@@ -61,8 +61,8 @@ type reader struct {
 	decoder *json.Decoder
 }
 
-func (c *reader) Read() (*types.Url, error) {
-	item := &types.Url{}
+func (c *reader) Read() (*types.URL, error) {
+	item := &types.URL{}
 	if err := c.decoder.Decode(&item); err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ type FileRepository struct {
 	storageWriter *writer
 }
 
-func (r *FileRepository) Save(url *types.Url) error {
+func (r *FileRepository) Save(url *types.URL) error {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
@@ -91,13 +91,13 @@ func (r *FileRepository) Save(url *types.Url) error {
 	return nil
 }
 
-func (r *FileRepository) FindByHash(hash string) (exist bool, url *types.Url, err error) {
+func (r *FileRepository) FindByHash(hash string) (exist bool, url *types.URL, err error) {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
 	_, err = r.storageReader.file.Seek(0, 0)
 	if err != nil {
-		return false, &types.Url{}, err
+		return false, &types.URL{}, err
 	}
 
 	for {
@@ -113,15 +113,15 @@ func (r *FileRepository) FindByHash(hash string) (exist bool, url *types.Url, er
 	}
 }
 
-func (r *FileRepository) FindByUuid(uuid string) (urls map[string]*types.Url, err error) {
+func (r *FileRepository) FindByUUID(uuid string) (urls map[string]*types.URL, err error) {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
-	urls = map[string]*types.Url{}
+	urls = map[string]*types.URL{}
 
 	_, err = r.storageReader.file.Seek(0, 0)
 	if err != nil {
-		return map[string]*types.Url{}, err
+		return map[string]*types.URL{}, err
 	}
 
 	for {
@@ -131,7 +131,7 @@ func (r *FileRepository) FindByUuid(uuid string) (urls map[string]*types.Url, er
 			break
 		}
 
-		if item.Uuid == uuid {
+		if item.UUID == uuid {
 			urls[item.Hash] = item
 		}
 	}

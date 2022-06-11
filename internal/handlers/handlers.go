@@ -24,10 +24,10 @@ type response struct {
 	URL string `json:"result"`
 }
 
-// Url пользователя
-type userUrl struct {
-	ShortUrl    string `json:"short_url"`
-	OriginalUrl string `json:"original_url"`
+// URL пользователя
+type userURL struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 // CreateShortURLHandler — создает короткий урл.
@@ -40,14 +40,14 @@ func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	h.Write(body)
 
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	uuid := middlewares.UserSignedCookie.Uuid
-	shortUrl := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, h.Sum(nil))
+	uuid := middlewares.UserSignedCookie.UUID
+	shortURL := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, h.Sum(nil))
 
-	url := &types.Url{
-		Uuid:     uuid,
+	url := &types.URL{
+		UUID:     uuid,
 		Hash:     hash,
 		URL:      string(body),
-		ShortUrl: shortUrl,
+		ShortURL: shortURL,
 	}
 
 	err := app.Storage.Save(url)
@@ -58,7 +58,7 @@ func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(url.ShortUrl))
+	w.Write([]byte(url.ShortURL))
 }
 
 // GetShortURLHandler — возвращает полный урл по короткому.
@@ -95,14 +95,14 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	h.Write([]byte(u.URL))
 
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	uuid := middlewares.UserSignedCookie.Uuid
-	shortUrl := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, h.Sum(nil))
+	uuid := middlewares.UserSignedCookie.UUID
+	shortURL := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, h.Sum(nil))
 
-	url := &types.Url{
-		Uuid:     uuid,
+	url := &types.URL{
+		UUID:     uuid,
 		Hash:     hash,
 		URL:      u.URL,
-		ShortUrl: shortUrl,
+		ShortURL: shortURL,
 	}
 
 	err := app.Storage.Save(url)
@@ -112,7 +112,7 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 	}
 
-	resp, _ := json.Marshal(response{URL: url.ShortUrl})
+	resp, _ := json.Marshal(response{URL: url.ShortURL})
 
 	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Accept", "application/json")
@@ -122,21 +122,21 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetUserURLSHandler — возвращает все сокращенные урлы пользователя.
 func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
-	uuid := middlewares.UserSignedCookie.Uuid
+	uuid := middlewares.UserSignedCookie.UUID
 
-	urls, _ := app.Storage.FindByUuid(uuid)
+	urls, _ := app.Storage.FindByUUID(uuid)
 
 	if len(urls) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	resp := make([]userUrl, 0, len(urls))
+	resp := make([]userURL, 0, len(urls))
 
 	for _, url := range urls {
-		resp = append(resp, userUrl{
-			ShortUrl:    url.ShortUrl,
-			OriginalUrl: url.URL,
+		resp = append(resp, userURL{
+			ShortURL:    url.ShortURL,
+			OriginalURL: url.URL,
 		})
 	}
 
