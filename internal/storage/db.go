@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type DbRepository struct {
@@ -22,7 +24,7 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 	}
 
 	if cfg.DatabaseDsn != "" {
-		db, err := sql.Open("pgx", cfg.DatabaseDsn)
+		db, err := sql.Open("mysql", cfg.DatabaseDsn)
 		if err == nil {
 			repo.DB = db
 			repo.migrate()
