@@ -99,7 +99,7 @@ func (r *DbRepository) Ping() (err error) {
 }
 
 func (r *DbRepository) migrate() {
-	_, err := r.DB.Exec("create table if not exists urls(hash varchar(256) null, uuid varchar(256) null, url text null, short_url varchar(256) null)")
+	_, err := r.DB.Exec("create table urls(hash varchar(256) null, uuid varchar(256) null, url text null, short_url varchar(256) null)")
 
 	fmt.Println(err)
 }
