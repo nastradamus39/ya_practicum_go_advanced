@@ -9,6 +9,7 @@ import (
 
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 	//_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v4"
 )
 
 type DbRepository struct {
