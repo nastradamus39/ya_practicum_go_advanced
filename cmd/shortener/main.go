@@ -1,20 +1,20 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+	"log"
+	"net/http"
+
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
-	"log"
-	"net/http"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -39,17 +39,18 @@ func main() {
 
 	// инициируем хранилище
 	s := storage.Storage{}
-	app.Storage, _ = s.New(&app.Cfg)
-
-	// подключение к бд
-	app.DB, err = sql.Open("sqlite3", "db.sqlite")
+	app.Storage, err = s.New(&app.Cfg)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
-	defer app.DB.Close()
 
 	// запускаем сервер
-	http.ListenAndServe(app.Cfg.ServerAddress, r)
+	err = http.ListenAndServe(app.Cfg.ServerAddress, r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 func Router() (r *chi.Mux) {

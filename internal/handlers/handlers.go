@@ -1,17 +1,14 @@
 package handlers
 
 import (
-	"context"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"time"
-
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -30,6 +27,11 @@ type response struct {
 type userURL struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+}
+
+type counter struct {
+	Id        int    `json:"id"`
+	CounterId string `json:"counterId"`
 }
 
 // CreateShortURLHandler — создает короткий урл.
@@ -71,16 +73,19 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !exist {
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
+		return
 	}
 
 	w.Header().Add("Location", url.URL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 	w.Write([]byte(url.URL))
+	return
 }
 
 // APICreateShortURLHandler Api для создания короткого урла
@@ -153,19 +158,10 @@ func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 
 // PingHandler проверяет соединение с базой
 func PingHandler(w http.ResponseWriter, r *http.Request) {
+	err := app.Storage.Ping()
 
-	if app.DB == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Подключение к бд не инициализировано"))
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	err := app.DB.PingContext(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
