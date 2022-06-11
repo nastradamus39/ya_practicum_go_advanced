@@ -22,7 +22,7 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 	}
 
 	if cfg.DatabaseDsn != "" {
-		db, err := sql.Open("mysql", cfg.DatabaseDsn)
+		db, err := sql.Open("pgx", cfg.DatabaseDsn)
 		if err == nil {
 			repo.DB = db
 			repo.migrate()
@@ -87,6 +87,10 @@ func (r *DbRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 }
 
 func (r *DbRepository) Ping() (err error) {
+	if r.DB == nil {
+		return errors.New("нет подключения к бд")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	return r.DB.PingContext(ctx)

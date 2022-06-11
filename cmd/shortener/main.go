@@ -14,7 +14,7 @@ import (
 	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v4"
 )
 
 func main() {
@@ -36,6 +36,8 @@ func main() {
 
 	fmt.Println(fmt.Printf("Starting server on %s", app.Cfg.ServerAddress))
 	fmt.Println(fmt.Printf("Base url %s", app.Cfg.BaseURL))
+
+	fmt.Println(app.Cfg)
 
 	// инициируем хранилище
 	s := storage.Storage{}
