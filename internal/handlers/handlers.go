@@ -1,15 +1,17 @@
 package handlers
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -147,4 +149,25 @@ func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	w.Write(respString)
+}
+
+// PingHandler проверяет соединение с базой
+func PingHandler(w http.ResponseWriter, r *http.Request) {
+
+	if app.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Подключение к бд не инициализировано"))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := app.DB.PingContext(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("ok"))
 }
