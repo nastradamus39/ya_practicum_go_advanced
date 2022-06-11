@@ -9,7 +9,7 @@ import (
 
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 	//_ "github.com/go-sql-driver/mysql"
-	_ "github.com/jackc/pgx/v4"
+	//_ "github.com/jackc/pgx/v4"
 )
 
 type DbRepository struct {
@@ -24,10 +24,12 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 	}
 
 	if cfg.DatabaseDsn != "" {
-		db, err := sql.Open("pgx", cfg.DatabaseDsn)
+		db, err := sql.Open("postgres", cfg.DatabaseDsn)
 		if err == nil {
 			repo.DB = db
 			repo.migrate()
+		} else {
+			fmt.Println(err)
 		}
 	}
 
@@ -99,7 +101,7 @@ func (r *DbRepository) Ping() (err error) {
 }
 
 func (r *DbRepository) migrate() {
-	_, err := r.DB.Exec("create table urls(hash varchar(256) null, uuid varchar(256) null, url text null, short_url varchar(256) null)")
+	_, err := r.DB.Exec("create table if not exists urls(hash varchar(256) null, uuid varchar(256) null, url text null, short_url varchar(256) null)")
 
 	fmt.Println(err)
 }
