@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,11 +8,40 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var S suite
+
+type suite struct {
+	Server *httptest.Server
+}
+
+func setup() {
+	app.Cfg = types.Config{
+		BaseURL:       "http://localhost:8080",
+		ServerPort:    "8080",
+		ServerAddress: "localhost:8080",
+		DBPath:        "./db_test",
+	}
+
+	st := storage.Storage{}
+	app.Storage, _ = st.New(&app.Cfg)
+
+	S = suite{
+		Server: httptest.NewServer(Router()),
+	}
+}
+
 func TestPostUrl(t *testing.T) {
+	setup()
+	defer S.Server.Close()
+
 	type want struct {
 		response   string
 		statusCode int
@@ -28,41 +55,41 @@ func TestPostUrl(t *testing.T) {
 		want   want
 	}{
 		{
-			name:   "Получение короткой ссылки по полной",
+			name:   "Получение короткой ссылки",
 			url:    "/",
 			method: http.MethodPost,
-			body:   strings.NewReader("http://ya.ru?x=fljdlfsdf&y=rweurowieur&z=sdkfhsdfisdf"),
+			body:   strings.NewReader("http://jwlqct1udntv.com/xr0cz5fshffj/pimnbpv/otw2im3fudstqi1"),
 			want: want{
 				statusCode: http.StatusCreated,
-				response:   "http://127.0.0.1:8080/d41d8cd98f00b204e9800998ecf8427e",
+				response:   "http://localhost:8080/580c5ab5ef6a4f27b3da9956ae192f4f",
 			},
 		},
 		{
-			name:   "Получение полной ссылки по короткой",
-			url:    "/b64da5d0149024b5b58c04c9fe758923",
+			name:   "Получение полной ссылки",
+			url:    "/580c5ab5ef6a4f27b3da9956ae192f4f",
 			method: http.MethodGet,
 			body:   nil,
 			want: want{
 				statusCode: http.StatusTemporaryRedirect,
 			},
 		},
+		{
+			name:   "Все ссылки пользователя",
+			url:    "/api/user/urls",
+			method: http.MethodGet,
+			body:   nil,
+			want: want{
+				statusCode: http.StatusNoContent,
+			},
+		},
 	}
-
-	app.Storage, _ = storage.NewFileStorage("./db_test")
-	//app.Cfg = "http://127.0.0.1:8080"
-
-	r := router()
-	ts := httptest.NewServer(r)
-
-	defer ts.Close()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			t.Logf(tt.name)
 
-			response, body := testRequest(t, ts, tt.method, tt.url)
-
+			response, body := testRequest(t, tt.method, tt.url, tt.body)
 			defer response.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, response.StatusCode)
@@ -74,9 +101,13 @@ func TestPostUrl(t *testing.T) {
 	}
 }
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string) (*http.Response, string) {
-	req, err := http.NewRequest(method, ts.URL+path, nil)
+func testRequest(t *testing.T, method string, path string, body io.Reader) (*http.Response, string) {
+	req, err := http.NewRequest(method, S.Server.URL+path, body)
 	require.NoError(t, err)
+
+	http.DefaultClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)

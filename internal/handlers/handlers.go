@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 	"io/ioutil"
 	"net/http"
 
@@ -34,42 +36,83 @@ func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	url := app.ShortURL(string(body))
+	h := md5.New()
+	h.Write(body)
+
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	uuid := middlewares.UserSignedCookie.Uuid
+	shortUrl := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, h.Sum(nil))
+
+	url := &types.Url{
+		Uuid:     uuid,
+		Hash:     hash,
+		URL:      string(body),
+		ShortUrl: shortUrl,
+	}
+
+	err := app.Storage.Save(url)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
 
 	w.WriteHeader(http.StatusCreated)
-
 	w.Write([]byte(url.ShortUrl))
 }
 
 // GetShortURLHandler — возвращает полный урл по короткому.
 func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
-	uuid := middlewares.UserSignedCookie.Uuid
 
-	u, err := app.GetURLByHash(uuid, hash)
+	exist, url, err := app.Storage.FindByHash(hash)
 
-	if err != nil {
-		fmt.Printf("Cannot find full url. Error - %s", err)
+	if !exist {
+		w.WriteHeader(http.StatusNotFound)
 	}
 
-	w.Header().Add("Location", u.URL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
 
-	w.Write([]byte(u.URL))
+	w.Header().Add("Location", url.URL)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+	w.Write([]byte(url.URL))
 }
 
 // APICreateShortURLHandler Api для создания короткого урла
 func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
-	url := url{}
+	u := url{}
 
-	if err := json.NewDecoder(r.Body).Decode(&url); err != nil {
+	// Обрабатываем входящий json
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	url.URL = app.ShortURL(url.URL).ShortUrl
+	h := md5.New()
+	h.Write([]byte(u.URL))
 
-	resp, _ := json.Marshal(response(url))
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	uuid := middlewares.UserSignedCookie.Uuid
+	shortUrl := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, h.Sum(nil))
+
+	url := &types.Url{
+		Uuid:     uuid,
+		Hash:     hash,
+		URL:      u.URL,
+		ShortUrl: shortUrl,
+	}
+
+	err := app.Storage.Save(url)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+
+	resp, _ := json.Marshal(response{URL: url.ShortUrl})
 
 	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Accept", "application/json")
@@ -81,10 +124,10 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 	uuid := middlewares.UserSignedCookie.Uuid
 
-	urls := app.GetUrlsByUuid(uuid)
+	urls, _ := app.Storage.FindByUuid(uuid)
+
 	if len(urls) == 0 {
 		w.WriteHeader(http.StatusNoContent)
-		w.Write([]byte(""))
 		return
 	}
 

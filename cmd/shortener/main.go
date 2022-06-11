@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	r := router()
+	r := Router()
 
 	// Переменные окружения в конфиг
 	err := env.Parse(&app.Cfg)
@@ -35,12 +35,15 @@ func main() {
 	fmt.Println(fmt.Printf("Starting server on %s", app.Cfg.ServerAddress))
 	fmt.Println(fmt.Printf("Base url %s", app.Cfg.BaseURL))
 
-	app.Storage, _ = storage.NewFileStorage(app.Cfg.DBPath)
+	// инициируем хранилище
+	s := storage.Storage{}
+	app.Storage, _ = s.New(&app.Cfg)
 
+	// запускаем сервер
 	http.ListenAndServe(app.Cfg.ServerAddress, r)
 }
 
-func router() (r *chi.Mux) {
+func Router() (r *chi.Mux) {
 	r = chi.NewRouter()
 
 	r.Use(middleware.RequestID)
