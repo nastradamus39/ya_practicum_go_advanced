@@ -31,7 +31,7 @@ func main() {
 	flag.StringVar(&app.Cfg.ServerPort, "server-port", app.Cfg.ServerPort, "Порт сервера")
 	flag.StringVar(&app.Cfg.BaseURL, "b", app.Cfg.BaseURL, "Базовый адрес результирующего сокращённого URL")
 	flag.StringVar(&app.Cfg.DBPath, "f", app.Cfg.DBPath, "Путь к файлу с ссылками")
-	flag.StringVar(&app.Cfg.DBPath, "d", app.Cfg.DatabaseDsn, "Строка с адресом подключения к БД")
+	flag.StringVar(&app.Cfg.DatabaseDsn, "d", app.Cfg.DatabaseDsn, "Строка с адресом подключения к БД")
 	flag.Parse()
 
 	fmt.Println(fmt.Printf("Starting server on %s", app.Cfg.ServerAddress))
