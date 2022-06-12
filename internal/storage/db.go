@@ -24,7 +24,7 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 	}
 
 	if cfg.DatabaseDsn != "" {
-		db, err := sql.Open("postgres", cfg.DatabaseDsn)
+		db, err := sql.Open("postgres", cfg.DatabaseDsn) // mysql || postgres
 		if err == nil {
 			repo.DB = db
 			repo.migrate()
@@ -42,12 +42,8 @@ func (r *DbRepository) Save(url *types.URL) (err error) {
 		return
 	}
 
-	_, err = r.DB.Exec(`BEGIN
-		INSERT INTO urls (hash, uuid, url, short_url)
-		VALUES ($1, $2, $3, $4);
-		EXCEPTION WHEN unique_violation THEN
-		-- Ignore duplicate inserts.
-		END;`, url.Hash, url.UUID, url.URL, url.ShortURL)
+	_, err = r.DB.Exec(`INSERT INTO urls (hash, uuid, url, short_url)
+		VALUES ($1, $2, $3, $4)`, url.Hash, url.UUID, url.URL, url.ShortURL)
 
 	return err
 }
@@ -60,7 +56,7 @@ func (r *DbRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 		return
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT u.hash, u.uuid, u.url, u.short_url FROM urls u WHERE u.hash = ? limit ?", hash, 1)
+	rows, err := r.DB.QueryContext(context.Background(), "SELECT u.hash, u.uuid, u.url, u.short_url FROM urls u WHERE u.hash = $1 limit $2", hash, 1)
 	defer rows.Close()
 
 	if err != nil {
