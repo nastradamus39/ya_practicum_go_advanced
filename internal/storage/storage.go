@@ -1,8 +1,10 @@
 package storage
 
 import (
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+	"fmt"
 	"os"
+
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 )
 
 type repository interface {
@@ -64,13 +66,13 @@ func (s *Storage) Save(url *types.URL) error {
 	// Сохраняем в базу
 	err := s.repositories.db.Save(url)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
 	// Сохраняем в память
 	err = s.repositories.memory.Save(url)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
 	// Сохраняем в файл
