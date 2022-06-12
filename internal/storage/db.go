@@ -42,8 +42,12 @@ func (r *DbRepository) Save(url *types.URL) (err error) {
 		return
 	}
 
-	_, err = r.DB.Exec(`INSERT IGNORE INTO urls (hash, uuid, url, short_url)
-		VALUES ($1, $2, $3, $4)`, url.Hash, url.UUID, url.URL, url.ShortURL)
+	_, err = r.DB.Exec(`BEGIN
+		INSERT INTO urls (hash, uuid, url, short_url)
+		VALUES ($1, $2, $3, $4);
+		EXCEPTION WHEN unique_violation THEN
+		-- Ignore duplicate inserts.
+		END;`, url.Hash, url.UUID, url.URL, url.ShortURL)
 
 	return err
 }
