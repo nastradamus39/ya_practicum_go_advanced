@@ -7,10 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
-	//_ "github.com/go-sql-driver/mysql"
-	//_ "github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
+	//_ "github.com/go-sql-driver/mysql"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 )
 
 type DbRepository struct {
@@ -37,8 +36,16 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 	return repo
 }
 
-func (r *DbRepository) Save(url *types.URL) error {
-	return nil
+func (r *DbRepository) Save(url *types.URL) (err error) {
+	if r.DB == nil {
+		err = errors.New("нет подключения к бд")
+		return
+	}
+
+	_, err = r.DB.Exec(`INSERT IGNORE INTO urls (hash, uuid, url, short_url)
+		VALUES ($1, $2, $3, $4)`, url.Hash, url.UUID, url.URL, url.ShortURL)
+
+	return err
 }
 
 func (r *DbRepository) FindByHash(hash string) (exist bool, url *types.URL, err error) {
@@ -49,7 +56,7 @@ func (r *DbRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 		return
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT hash, uuid, url, short_url FROM urls where hash = ? limit ?", hash, 1)
+	rows, err := r.DB.QueryContext(context.Background(), "SELECT u.hash, u.uuid, u.url, u.short_url FROM urls u WHERE u.hash = ? limit ?", hash, 1)
 	defer rows.Close()
 
 	if err != nil {
@@ -102,7 +109,16 @@ func (r *DbRepository) Ping() (err error) {
 }
 
 func (r *DbRepository) migrate() {
-	_, err := r.DB.Exec("create table if not exists urls(hash varchar(256) null, uuid varchar(256) null, url text null, short_url varchar(256) null)")
+	_, err := r.DB.Exec(`CREATE TABLE IF NOT EXISTS urls
+		(
+			hash      varchar(256) not null,
+			uuid      varchar(256) not null,
+			url       text         not null,
+			short_url varchar(256) not null,
+			constraint uk
+				unique (hash, uuid)
+		)`,
+	)
 
 	fmt.Println(err)
 }

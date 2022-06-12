@@ -61,8 +61,14 @@ func (s *Storage) New(cfg *types.Config) (*Storage, error) {
 }
 
 func (s *Storage) Save(url *types.URL) error {
+	// Сохраняем в базу
+	err := s.repositories.db.Save(url)
+	if err != nil {
+		return err
+	}
+
 	// Сохраняем в память
-	err := s.repositories.memory.Save(url)
+	err = s.repositories.memory.Save(url)
 	if err != nil {
 		return err
 	}
