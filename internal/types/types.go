@@ -11,8 +11,8 @@ type Config struct {
 
 // URL - структура для url
 type URL struct {
-	UUID     string
-	Hash     string
-	URL      string
-	ShortURL string
+	UUID     string `db:"uuid"`
+	Hash     string `db:"hash"`
+	URL      string `db:"url"`
+	ShortURL string `db:"short_url"`
 }

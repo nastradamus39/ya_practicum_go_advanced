@@ -83,6 +83,12 @@ func (s *Storage) Save(url *types.URL) error {
 	return nil
 }
 
+func (s *Storage) SaveBatch(urls []*types.URL) (err error) {
+	err = s.repositories.db.SaveBatch(urls)
+
+	return
+}
+
 func (s *Storage) FindByHash(hash string) (exist bool, url *types.URL, err error) {
 	// Сначала в бд
 	exist, url, err = s.repositories.db.FindByHash(hash)

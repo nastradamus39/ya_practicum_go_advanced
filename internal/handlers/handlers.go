@@ -18,6 +18,18 @@ type url struct {
 	URL string `json:"url"`
 }
 
+// batchUrl в пакетной обработке
+type batchUrl struct {
+	CorrelationId string `json:"correlation_id"`
+	OriginalUrl   string `json:"original_url"`
+}
+
+// shortenBatchUrl сокращенный урл в пакетной обработке
+type shortenBatchUrl struct {
+	CorrelationId string `json:"correlation_id"`
+	ShortUrl      string `json:"short_url"`
+}
+
 // Сокращенный url
 type response struct {
 	URL string `json:"result"`
@@ -27,11 +39,6 @@ type response struct {
 type userURL struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
-}
-
-type counter struct {
-	Id        int    `json:"id"`
-	CounterId string `json:"counterId"`
 }
 
 // CreateShortURLHandler — создает короткий урл.
@@ -125,6 +132,49 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Accept", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
+}
+
+// APICreateShortURLBatchHandler Api для создания коротких урлов пачками
+func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
+	var incomingData []batchUrl
+
+	// Обрабатываем входящий json
+	if err := json.NewDecoder(r.Body).Decode(&incomingData); err != nil {
+		fmt.Println(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var urls []*types.URL
+	var resp []*shortenBatchUrl
+	uuid := middlewares.UserSignedCookie.UUID
+
+	for _, url := range incomingData {
+		shortURL := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, url.CorrelationId)
+
+		urls = append(urls, &types.URL{
+			UUID:     uuid,
+			Hash:     url.CorrelationId,
+			URL:      url.OriginalUrl,
+			ShortURL: shortURL,
+		})
+		resp = append(resp, &shortenBatchUrl{
+			CorrelationId: url.CorrelationId,
+			ShortUrl:      shortURL,
+		})
+	}
+
+	err := app.Storage.SaveBatch(urls)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	response, _ := json.Marshal(resp)
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Accept", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(response)
 }
 
 // GetUserURLSHandler — возвращает все сокращенные урлы пользователя.

@@ -2,18 +2,18 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/jmoiron/sqlx"
 	//_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 )
 
 type DbRepository struct {
-	DB  *sql.DB
+	DB  *sqlx.DB
 	cfg *types.Config
 }
 
@@ -24,7 +24,7 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 	}
 
 	if cfg.DatabaseDsn != "" {
-		db, err := sql.Open("postgres", cfg.DatabaseDsn) // mysql || postgres
+		db, err := sqlx.Open("postgres", cfg.DatabaseDsn) // mysql || postgres
 		if err == nil {
 			repo.DB = db
 			repo.migrate()
@@ -42,8 +42,20 @@ func (r *DbRepository) Save(url *types.URL) (err error) {
 		return
 	}
 
-	_, err = r.DB.Exec(`INSERT INTO urls (hash, uuid, url, short_url)
-		VALUES ($1, $2, $3, $4)`, url.Hash, url.UUID, url.URL, url.ShortURL)
+	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
+		VALUES (:hash, :uuid, :url, :short_url)`, url)
+
+	return err
+}
+
+func (r *DbRepository) SaveBatch(url []*types.URL) (err error) {
+	if r.DB == nil {
+		err = errors.New("нет подключения к бд")
+		return
+	}
+
+	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
+        VALUES (:hash, :uuid, :url, :short_url)`, url)
 
 	return err
 }
@@ -109,7 +121,7 @@ func (r *DbRepository) Ping() (err error) {
 }
 
 func (r *DbRepository) migrate() {
-	_, err := r.DB.Exec(`CREATE TABLE IF NOT EXISTS urls
+	_, err := r.DB.Queryx(`CREATE TABLE IF NOT EXISTS urls
 		(
 			hash      varchar(256) not null,
 			uuid      varchar(256) not null,
