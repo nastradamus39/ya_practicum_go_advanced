@@ -43,7 +43,7 @@ func (r *DbRepository) Save(url *types.URL) (err error) {
 		return fmt.Errorf("%w", shortenerErrors.NoDbConnection)
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where `hash` = $1", url.Hash)
+	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where 'hash' = $1", url.Hash)
 
 	if rows != nil {
 		defer rows.Close()
