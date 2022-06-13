@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
@@ -45,9 +46,12 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 
 	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where 'hash' = $1", url.Hash)
 
-	if rows != nil {
-		defer rows.Close()
-	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(rows)
 
 	if err != nil {
 		return err
@@ -112,7 +116,12 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 	}
 
 	rows, err := r.DB.QueryContext(context.Background(), "SELECT hash, uuid, url, short_url FROM urls where uuid = $1", uuid)
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(rows)
 
 	if err != nil {
 		exist = false
@@ -120,10 +129,6 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 	}
 
 	urls = map[string]*types.URL{}
-	//for rows.Next() {
-	//	exist = true
-	//	rows.Scan(&url.Hash, &url.UUID, &url.URL, &url.ShortURL)
-	//}
 
 	return
 }
