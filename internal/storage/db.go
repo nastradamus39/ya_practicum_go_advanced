@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	//_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 )

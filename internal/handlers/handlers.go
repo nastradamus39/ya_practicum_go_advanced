@@ -150,7 +150,7 @@ func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
 	uuid := middlewares.UserSignedCookie.UUID
 
 	for _, url := range incomingData {
-		shortURL := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, url.CorrelationId)
+		shortURL := fmt.Sprintf("%s/%s", app.Cfg.BaseURL, url.CorrelationId)
 
 		urls = append(urls, &types.URL{
 			UUID:     uuid,
