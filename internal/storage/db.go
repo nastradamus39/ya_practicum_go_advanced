@@ -43,7 +43,7 @@ func (r *DbRepository) Save(url *types.URL) (err error) {
 		return fmt.Errorf("%w", shortenerErrors.NoDbConnection)
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where `hash` = ?", url.Hash)
+	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where `hash` = $1", url.Hash)
 
 	if rows != nil {
 		defer rows.Close()
@@ -111,7 +111,7 @@ func (r *DbRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 		return
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT hash, uuid, url, short_url FROM urls where uuid = ?", uuid)
+	rows, err := r.DB.QueryContext(context.Background(), "SELECT hash, uuid, url, short_url FROM urls where uuid = $1", uuid)
 	defer rows.Close()
 
 	if err != nil {
