@@ -14,13 +14,13 @@ import (
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 )
 
-type DbRepository struct {
+type DBRepository struct {
 	DB  *sqlx.DB
 	cfg *types.Config
 }
 
-func NewDbRepository(cfg *types.Config) *DbRepository {
-	repo := &DbRepository{
+func NewDBRepository(cfg *types.Config) *DBRepository {
+	repo := &DBRepository{
 		cfg: cfg,
 		DB:  nil,
 	}
@@ -38,9 +38,9 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 	return repo
 }
 
-func (r *DbRepository) Save(url *types.URL) (err error) {
+func (r *DBRepository) Save(url *types.URL) (err error) {
 	if r.DB == nil {
-		return fmt.Errorf("%w", shortenerErrors.NoDbConnection)
+		return fmt.Errorf("%w", shortenerErrors.ErrNoDBConnection)
 	}
 
 	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where 'hash' = $1", url.Hash)
@@ -54,7 +54,7 @@ func (r *DbRepository) Save(url *types.URL) (err error) {
 	}
 
 	if rows.Next() {
-		return fmt.Errorf("%w", shortenerErrors.UrlConflict)
+		return fmt.Errorf("%w", shortenerErrors.ErrURLConflict)
 	}
 
 	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
@@ -63,7 +63,7 @@ func (r *DbRepository) Save(url *types.URL) (err error) {
 	return err
 }
 
-func (r *DbRepository) SaveBatch(url []*types.URL) (err error) {
+func (r *DBRepository) SaveBatch(url []*types.URL) (err error) {
 	if r.DB == nil {
 		err = errors.New("нет подключения к бд")
 		return
@@ -75,7 +75,7 @@ func (r *DbRepository) SaveBatch(url []*types.URL) (err error) {
 	return err
 }
 
-func (r *DbRepository) FindByHash(hash string) (exist bool, url *types.URL, err error) {
+func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err error) {
 	if r.DB == nil {
 		exist = false
 		url = nil
@@ -103,7 +103,7 @@ func (r *DbRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 	return
 }
 
-func (r *DbRepository) FindByUUID(uuid string) (exist bool, urls map[string]*types.URL, err error) {
+func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*types.URL, err error) {
 	if r.DB == nil {
 		exist = false
 		urls = nil
@@ -128,7 +128,7 @@ func (r *DbRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 	return
 }
 
-func (r *DbRepository) Ping() (err error) {
+func (r *DBRepository) Ping() (err error) {
 	if r.DB == nil {
 		return errors.New("нет подключения к бд")
 	}
@@ -138,7 +138,7 @@ func (r *DbRepository) Ping() (err error) {
 	return r.DB.PingContext(ctx)
 }
 
-func (r *DbRepository) migrate() {
+func (r *DBRepository) migrate() {
 	_, err := r.DB.Queryx(`CREATE TABLE IF NOT EXISTS urls
 		(
 			hash      varchar(256) not null,
@@ -150,5 +150,5 @@ func (r *DbRepository) migrate() {
 		)`,
 	)
 
-	fmt.Println(err)
+	log.Println(err)
 }

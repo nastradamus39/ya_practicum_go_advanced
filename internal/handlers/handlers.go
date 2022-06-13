@@ -24,16 +24,16 @@ type url struct {
 	URL string `json:"url"`
 }
 
-// batchUrl в пакетной обработке
-type batchUrl struct {
-	CorrelationId string `json:"correlation_id"`
-	OriginalUrl   string `json:"original_url"`
+// batchURL в пакетной обработке
+type batchURL struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
 }
 
-// shortenBatchUrl сокращенный урл в пакетной обработке
-type shortenBatchUrl struct {
-	CorrelationId string `json:"correlation_id"`
-	ShortUrl      string `json:"short_url"`
+// shortenBatchURL сокращенный урл в пакетной обработке
+type shortenBatchURL struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
 }
 
 // Сокращенный url
@@ -49,7 +49,7 @@ type userURL struct {
 
 // CreateShortURLHandler — создает короткий урл.
 func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
-	originalUrl, _ := ioutil.ReadAll(r.Body)
+	originalURL, _ := ioutil.ReadAll(r.Body)
 
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -59,19 +59,19 @@ func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	}(r.Body)
 
 	uuid := middlewares.UserSignedCookie.UUID
-	hash, shortURL := utils.GetShortUrl(string(originalUrl))
+	hash, shortURL := utils.GetShortURL(string(originalURL))
 
 	url := &types.URL{
 		UUID:     uuid,
 		Hash:     hash,
-		URL:      string(originalUrl),
+		URL:      string(originalURL),
 		ShortURL: shortURL,
 	}
 
 	err := storage.Storage.Save(url)
 
 	// Если такой url уже есть - отдаем соответствующий статус
-	if errors.Is(err, shortenerErrors.UrlConflict) {
+	if errors.Is(err, shortenerErrors.ErrURLConflict) {
 		w.WriteHeader(http.StatusConflict)
 		w.Write([]byte(url.ShortURL))
 		return
@@ -87,7 +87,6 @@ func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(url.ShortURL))
-	return
 }
 
 // GetShortURLHandler — возвращает полный урл по короткому.
@@ -110,7 +109,6 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Location", url.URL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 	w.Write([]byte(url.URL))
-	return
 }
 
 // APICreateShortURLHandler Api для создания короткого урла
@@ -124,7 +122,7 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uuid := middlewares.UserSignedCookie.UUID
-	hash, shortURL := utils.GetShortUrl(string(u.URL))
+	hash, shortURL := utils.GetShortURL(string(u.URL))
 
 	url := &types.URL{
 		UUID:     uuid,
@@ -136,7 +134,7 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	err := storage.Storage.Save(url)
 
 	// Если такой url уже есть - отдаем соответствующий статус
-	if errors.Is(err, shortenerErrors.UrlConflict) {
+	if errors.Is(err, shortenerErrors.ErrURLConflict) {
 		resp, _ := json.Marshal(response{URL: url.ShortURL})
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusConflict)
@@ -159,7 +157,7 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 // APICreateShortURLBatchHandler Api для создания коротких урлов пачками
 func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
-	var incomingData []batchUrl
+	var incomingData []batchURL
 
 	// Обрабатываем входящий json
 	if err := json.NewDecoder(r.Body).Decode(&incomingData); err != nil {
@@ -169,21 +167,21 @@ func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var urls []*types.URL
-	var resp []*shortenBatchUrl
+	var resp []*shortenBatchURL
 	uuid := middlewares.UserSignedCookie.UUID
 
 	for _, url := range incomingData {
-		shortURL := fmt.Sprintf("%s/%s", app.Cfg.BaseURL, url.CorrelationId)
+		shortURL := fmt.Sprintf("%s/%s", app.Cfg.BaseURL, url.CorrelationID)
 
 		urls = append(urls, &types.URL{
 			UUID:     uuid,
-			Hash:     url.CorrelationId,
-			URL:      url.OriginalUrl,
+			Hash:     url.CorrelationID,
+			URL:      url.OriginalURL,
 			ShortURL: shortURL,
 		})
-		resp = append(resp, &shortenBatchUrl{
-			CorrelationId: url.CorrelationId,
-			ShortUrl:      shortURL,
+		resp = append(resp, &shortenBatchURL{
+			CorrelationID: url.CorrelationID,
+			ShortURL:      shortURL,
 		})
 	}
 

@@ -19,14 +19,14 @@ func NewMemoryRepository() *MemoryRepository {
 }
 
 func (r *MemoryRepository) Save(url *types.URL) error {
-	hash, _ := utils.GetShortUrl(url.URL)
+	hash, _ := utils.GetShortURL(url.URL)
 
 	// Дубли не храним
 	if _, exist := r.items[hash]; !exist {
 		r.items[hash] = url
 		return nil
 	} else {
-		return fmt.Errorf("%w", errors.UrlConflict)
+		return fmt.Errorf("%w", errors.ErrURLConflict)
 	}
 }
 

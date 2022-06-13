@@ -35,7 +35,7 @@ type store interface {
 type repositories struct {
 	memory *MemoryRepository
 	file   *FileRepository
-	db     *DbRepository
+	db     *DBRepository
 }
 
 type storage struct {
@@ -49,7 +49,7 @@ func New(cfg *types.Config) (err error) {
 	}
 
 	mr := NewMemoryRepository()
-	dbr := NewDbRepository(cfg)
+	dbr := NewDBRepository(cfg)
 	fr, err := NewFileRepository(cfg.DBPath)
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func (s *storage) Save(url *types.URL) (err error) {
 	// Сохраняем в базу
 	err = s.repositories.db.Save(url)
 	// база опциональна
-	if errors.Is(err, shortenerErrors.NoDbConnection) {
+	if errors.Is(err, shortenerErrors.ErrNoDBConnection) {
 		return nil
 	}
 	if err != nil {

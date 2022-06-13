@@ -2,6 +2,6 @@ package errors
 
 import "errors"
 
-var UrlConflict = errors.New(`url уже существует`)
+var ErrURLConflict = errors.New(`url уже существует`)
 
-var NoDbConnection = errors.New(`нет подключения к бд`)
+var ErrNoDBConnection = errors.New(`нет подключения к бд`)
