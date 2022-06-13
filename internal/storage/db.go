@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
+	"log"
 	"time"
 
 	//_ "github.com/go-sql-driver/mysql"
@@ -30,7 +31,7 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 			repo.DB = db
 			repo.migrate()
 		} else {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 
@@ -39,12 +40,14 @@ func NewDbRepository(cfg *types.Config) *DbRepository {
 
 func (r *DbRepository) Save(url *types.URL) (err error) {
 	if r.DB == nil {
-		err = errors.New("нет подключения к бд")
-		return
+		return fmt.Errorf("%w", shortenerErrors.NoDbConnection)
 	}
 
 	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where `hash` = ?", url.Hash)
-	defer rows.Close()
+
+	if rows != nil {
+		defer rows.Close()
+	}
 
 	if err != nil {
 		return err

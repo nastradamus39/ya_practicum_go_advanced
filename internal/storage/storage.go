@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"errors"
+	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
 	"log"
 	"os"
 
@@ -66,13 +68,16 @@ func New(cfg *types.Config) (err error) {
 func (s *storage) Save(url *types.URL) (err error) {
 	// Сохраняем в память
 	err = s.repositories.memory.Save(url)
+	// если не получилось записать в память - все плохо. выходим
 	if err != nil {
 		log.Println(err)
+		return
 	}
 
 	// Сохраняем в файл
 	if exist, _, _ := s.repositories.file.FindByHash(url.Hash); !exist {
 		err = s.repositories.file.Save(url)
+		// не получилось записать в файл - идем дальше
 		if err != nil {
 			log.Println(err)
 		}
@@ -80,6 +85,10 @@ func (s *storage) Save(url *types.URL) (err error) {
 
 	// Сохраняем в базу
 	err = s.repositories.db.Save(url)
+	// база опциональна
+	if errors.Is(err, shortenerErrors.NoDbConnection) {
+		return nil
+	}
 	if err != nil {
 		log.Println(err)
 	}
