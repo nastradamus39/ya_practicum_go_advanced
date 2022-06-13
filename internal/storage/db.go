@@ -53,7 +53,7 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 		}
 	}(rows)
 
-	if err != nil {
+	if rows.Err() != nil {
 		return err
 	}
 
@@ -89,11 +89,14 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 
 	rows, err := r.DB.QueryContext(context.Background(), "SELECT u.hash, u.uuid, u.url, u.short_url FROM urls u WHERE u.hash = $1 limit $2", hash, 1)
 
-	if rows != nil {
-		defer rows.Close()
-	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(rows)
 
-	if err != nil {
+	if rows.Err() != nil {
 		exist = false
 		return
 	}
@@ -123,7 +126,7 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 		}
 	}(rows)
 
-	if err != nil {
+	if rows.Err() != nil {
 		exist = false
 		return
 	}
@@ -144,7 +147,7 @@ func (r *DBRepository) Ping() (err error) {
 }
 
 func (r *DBRepository) migrate() {
-	_, err := r.DB.Queryx(`CREATE TABLE IF NOT EXISTS urls
+	_, err := r.DB.Exec(`CREATE TABLE IF NOT EXISTS urls
 		(
 			hash      varchar(256) not null,
 			uuid      varchar(256) not null,
