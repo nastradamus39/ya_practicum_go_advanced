@@ -30,8 +30,7 @@ func setup() {
 		DBPath:        "./db_test",
 	}
 
-	st := storage.Storage{}
-	app.Storage, _ = st.New(&app.Cfg)
+	storage.New(&app.Cfg)
 
 	S = suite{
 		Server: httptest.NewServer(Router()),
@@ -41,7 +40,7 @@ func setup() {
 func TestPostUrl(t *testing.T) {
 	setup()
 	defer S.Server.Close()
-	defer app.Storage.Drop()
+	defer storage.Storage.Drop()
 
 	type want struct {
 		response   string
