@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -124,12 +123,8 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h := md5.New()
-	h.Write([]byte(u.URL))
-
-	hash := fmt.Sprintf("%x", h.Sum(nil))
 	uuid := middlewares.UserSignedCookie.UUID
-	shortURL := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, h.Sum(nil))
+	hash, shortURL := utils.GetShortUrl(string(u.URL))
 
 	url := &types.URL{
 		UUID:     uuid,
@@ -139,6 +134,13 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := storage.Storage.Save(url)
+
+	// Если такой url уже есть - отдаем соответствующий статус
+	if errors.Is(err, shortenerErrors.UrlConflict) {
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte(url.ShortURL))
+		return
+	}
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
