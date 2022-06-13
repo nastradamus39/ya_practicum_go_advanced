@@ -3,12 +3,19 @@ package handlers
 import (
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
+
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
+	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/utils"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -43,40 +50,52 @@ type userURL struct {
 
 // CreateShortURLHandler — создает короткий урл.
 func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
-	body, _ := ioutil.ReadAll(r.Body)
+	originalUrl, _ := ioutil.ReadAll(r.Body)
 
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Printf("CreateShortURLHandler. %s", err)
+		}
+	}(r.Body)
 
-	h := md5.New()
-	h.Write(body)
-
-	hash := fmt.Sprintf("%x", h.Sum(nil))
 	uuid := middlewares.UserSignedCookie.UUID
-	shortURL := fmt.Sprintf("%s/%x", app.Cfg.BaseURL, h.Sum(nil))
+	hash, shortURL := utils.GetShortUrl(string(originalUrl))
 
 	url := &types.URL{
 		UUID:     uuid,
 		Hash:     hash,
-		URL:      string(body),
+		URL:      string(originalUrl),
 		ShortURL: shortURL,
 	}
 
-	err := app.Storage.Save(url)
+	err := storage.Storage.Save(url)
 
+	// Если такой url уже есть - отдаем соответствующий статус
+	if errors.Is(err, shortenerErrors.UrlConflict) {
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte(url.ShortURL))
+		return
+	}
+
+	// Другие ошибки при сохранении в хранилище
 	if err != nil {
+		log.Printf("CreateShortURLHandler. Не удалось сохранить урл в хранилище. %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(url.ShortURL))
+	return
 }
 
 // GetShortURLHandler — возвращает полный урл по короткому.
 func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 
-	exist, url, err := app.Storage.FindByHash(hash)
+	exist, url, err := storage.Storage.FindByHash(hash)
 
 	if !exist {
 		w.WriteHeader(http.StatusNotFound)
@@ -119,7 +138,7 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 		ShortURL: shortURL,
 	}
 
-	err := app.Storage.Save(url)
+	err := storage.Storage.Save(url)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -164,7 +183,7 @@ func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	err := app.Storage.SaveBatch(urls)
+	err := storage.Storage.SaveBatch(urls)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -181,7 +200,7 @@ func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
 func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 	uuid := middlewares.UserSignedCookie.UUID
 
-	urls, _ := app.Storage.FindByUUID(uuid)
+	urls, _ := storage.Storage.FindByUUID(uuid)
 
 	if len(urls) == 0 {
 		w.WriteHeader(http.StatusNoContent)
@@ -208,7 +227,7 @@ func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 
 // PingHandler проверяет соединение с базой
 func PingHandler(w http.ResponseWriter, r *http.Request) {
-	err := app.Storage.Ping()
+	err := storage.Storage.Ping()
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

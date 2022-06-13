@@ -2,25 +2,34 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
+	"os"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
 )
 
 func main() {
 	r := Router()
 
+	// Логер
+	flog, err := os.OpenFile(`server.log`, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer flog.Close()
+
+	log.SetOutput(flog)
+
 	// Переменные окружения в конфиг
-	err := env.Parse(&app.Cfg)
+	err = env.Parse(&app.Cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,23 +42,20 @@ func main() {
 	flag.StringVar(&app.Cfg.DatabaseDsn, "d", app.Cfg.DatabaseDsn, "Строка с адресом подключения к БД")
 	flag.Parse()
 
-	fmt.Println(fmt.Printf("Starting server on %s", app.Cfg.ServerAddress))
-	fmt.Println(fmt.Printf("Base url %s", app.Cfg.BaseURL))
-
-	fmt.Println(app.Cfg)
+	log.Printf("Starting server on %s", app.Cfg.ServerAddress)
+	log.Println(app.Cfg)
 
 	// инициируем хранилище
-	s := storage.Storage{}
-	app.Storage, err = s.New(&app.Cfg)
+	err = storage.New(&app.Cfg)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("Не удалось инициировать хранилище. %s", err)
 		return
 	}
 
 	// запускаем сервер
 	err = http.ListenAndServe(app.Cfg.ServerAddress, r)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("Не удалось запустить сервер. %s", err)
 		return
 	}
 }

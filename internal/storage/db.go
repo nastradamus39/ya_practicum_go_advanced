@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
 	"time"
 
 	//_ "github.com/go-sql-driver/mysql"
@@ -42,6 +43,17 @@ func (r *DbRepository) Save(url *types.URL) (err error) {
 		return
 	}
 
+	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where `hash` = ?", url.Hash)
+	defer rows.Close()
+
+	if err != nil {
+		return err
+	}
+
+	if rows.Next() {
+		return fmt.Errorf("%w", shortenerErrors.UrlConflict)
+	}
+
 	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
 		VALUES (:hash, :uuid, :url, :short_url)`, url)
 
@@ -69,7 +81,10 @@ func (r *DbRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 	}
 
 	rows, err := r.DB.QueryContext(context.Background(), "SELECT u.hash, u.uuid, u.url, u.short_url FROM urls u WHERE u.hash = $1 limit $2", hash, 1)
-	defer rows.Close()
+
+	if rows != nil {
+		defer rows.Close()
+	}
 
 	if err != nil {
 		exist = false

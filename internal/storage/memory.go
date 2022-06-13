@@ -1,9 +1,11 @@
 package storage
 
 import (
-	"crypto/md5"
 	"fmt"
+
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/utils"
 )
 
 type MemoryRepository struct {
@@ -17,14 +19,15 @@ func NewMemoryRepository() *MemoryRepository {
 }
 
 func (r *MemoryRepository) Save(url *types.URL) error {
-	h := md5.New()
-	h.Write([]byte(fmt.Sprintf("%s_%s", url.UUID, url.URL)))
+	hash, _ := utils.GetShortUrl(url.URL)
 
-	key := fmt.Sprintf("%x", h.Sum(nil))
-
-	r.items[key] = url
-
-	return nil
+	// Дубли не храним
+	if _, exist := r.items[hash]; !exist {
+		r.items[hash] = url
+		return nil
+	} else {
+		return fmt.Errorf("%w", errors.UrlConflict)
+	}
 }
 
 func (r *MemoryRepository) FindByHash(hash string) (exist bool, url *types.URL, err error) {
