@@ -137,6 +137,7 @@ func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Если такой url уже есть - отдаем соответствующий статус
 	if errors.Is(err, shortenerErrors.UrlConflict) {
+		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusConflict)
 		w.Write([]byte(url.ShortURL))
 		return
