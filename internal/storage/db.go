@@ -136,6 +136,17 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 	return
 }
 
+func (r *DBRepository) DeleteByHash(hash []string) (err error) {
+	if r.DB == nil {
+		err = errors.New("нет подключения к бд")
+		return
+	}
+
+	_, err = r.DB.QueryContext(context.Background(), `UPDATE urls SET deletedAt = $1 WHERE hash IN ($2)`, time.Now(), hash)
+
+	return
+}
+
 func (r *DBRepository) Ping() (err error) {
 	if r.DB == nil {
 		return errors.New("нет подключения к бд")
@@ -153,6 +164,7 @@ func (r *DBRepository) migrate() {
 			uuid      varchar(256) not null,
 			url       text         not null,
 			short_url varchar(256) not null,
+    		deletedAt datetime null
 			constraint uk
 				unique (hash, uuid)
 		)`,

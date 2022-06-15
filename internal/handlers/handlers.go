@@ -239,3 +239,16 @@ func PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("ok"))
 }
+
+// DeleteUserURLSHandler удаляет урлы из базы
+func DeleteUserURLSHandler(w http.ResponseWriter, r *http.Request) {
+	err := storage.Storage.DeleteByHash([]string{})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("ok"))
+}
