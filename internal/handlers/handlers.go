@@ -106,6 +106,14 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deletedAt, _ := url.DeletedAt.Value()
+
+	if deletedAt != nil {
+		w.WriteHeader(http.StatusGone)
+		w.Write([]byte("gone"))
+		return
+	}
+
 	w.Header().Add("Location", url.URL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 	w.Write([]byte(url.URL))
@@ -196,6 +204,26 @@ func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Accept", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(response)
+}
+
+// APIDeleteShortURLBatchHandler удаляет урлы из базы по идентификаторам
+func APIDeleteShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
+	var incomingData []string
+
+	// Обрабатываем входящий json
+	if err := json.NewDecoder(r.Body).Decode(&incomingData); err != nil {
+		fmt.Println(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(incomingData) > 0 {
+		go storage.Storage.DeleteByHash(incomingData)
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("ok"))
 }
 
 // GetUserURLSHandler — возвращает все сокращенные урлы пользователя.
