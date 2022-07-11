@@ -180,11 +180,11 @@ func (r *DBRepository) Ping() (err error) {
 func (r *DBRepository) migrate() {
 	_, err := r.DB.Exec(`CREATE TABLE IF NOT EXISTS urls
 		(
-			hash      varchar(256) not null,
-			uuid      varchar(256) not null,
-			url       text         not null,
-			short_url varchar(256) not null,
-    		
+			hash       varchar(256) not null,
+			uuid       varchar(256) not null,
+			url        text         not null,
+			short_url  varchar(256) not null,
+    		deleted_at date         null,
 			constraint uk
 				unique (hash, uuid)
 		)`,
