@@ -103,7 +103,7 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 		}
 	}(rows)
 
-	if rows.Err() != nil {
+	if err != nil {
 		exist = false
 		return
 	}
