@@ -136,6 +136,15 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 	return
 }
 
+func (r *DBRepository) DeleteByHash(hash []string) (err error) {
+	if r.DB == nil {
+		err = errors.New("нет подключения к бд")
+		return
+	}
+	
+	return
+}
+
 func (r *DBRepository) Ping() (err error) {
 	if r.DB == nil {
 		return errors.New("нет подключения к бд")
