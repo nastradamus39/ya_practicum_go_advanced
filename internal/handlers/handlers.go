@@ -106,6 +106,14 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deletedAt, _ := url.DeletedAt.Value()
+
+	if deletedAt != nil {
+		w.WriteHeader(http.StatusGone)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	w.Header().Add("Location", url.URL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 	w.Write([]byte(url.URL))

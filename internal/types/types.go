@@ -1,8 +1,6 @@
 package types
 
-import (
-	"database/sql"
-)
+import "database/sql"
 
 // Config конфиг приложения
 type Config struct {
@@ -15,9 +13,9 @@ type Config struct {
 
 // URL - структура для url
 type URL struct {
-	UUID      string       `db:"uuid"`
-	Hash      string       `db:"hash"`
-	URL       string       `db:"url"`
-	ShortURL  string       `db:"short_url"`
-	DeletedAt sql.NullTime `db:"deleted_at"`
+	UUID      string         `db:"uuid"`
+	Hash      string         `db:"hash"`
+	URL       string         `db:"url"`
+	ShortURL  string         `db:"short_url"`
+	DeletedAt sql.NullString `db:"deleted_at"`
 }
