@@ -1,5 +1,9 @@
 package types
 
+import (
+	"database/sql"
+)
+
 // Config конфиг приложения
 type Config struct {
 	BaseURL       string `env:"BASE_URL" envDefault:"http://localhost:8080"`
@@ -11,8 +15,9 @@ type Config struct {
 
 // URL - структура для url
 type URL struct {
-	UUID     string `db:"uuid"`
-	Hash     string `db:"hash"`
-	URL      string `db:"url"`
-	ShortURL string `db:"short_url"`
+	UUID      string       `db:"uuid"`
+	Hash      string       `db:"hash"`
+	URL       string       `db:"url"`
+	ShortURL  string       `db:"short_url"`
+	DeletedAt sql.NullTime `db:"deleted_at"`
 }

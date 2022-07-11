@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
@@ -78,13 +77,19 @@ func (r *DBRepository) SaveBatch(url []*types.URL) (err error) {
 		return
 	}
 
+	// PG
 	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
-        VALUES (:hash, :uuid, :url, :short_url)`, url)
+	  VALUES (:hash, :uuid, :url, :short_url) ON CONFLICT (hash, uuid) DO NOTHING`, url)
+
+	// Mysql
+	//_, err = r.DB.NamedExec(`INSERT IGNORE INTO urls (hash, uuid, url, short_url)
+	//   VALUES (:hash, :uuid, :url, :short_url)`, url)
 
 	return err
 }
 
 func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err error) {
+
 	if r.DB == nil {
 		exist = false
 		url = nil
@@ -105,7 +110,6 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 
 	if err != nil {
 		exist = false
-		fmt.Println(err)
 		return
 	}
 
@@ -113,9 +117,9 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 		url = &types.URL{}
 		err = rows.StructScan(url)
 		if err != nil {
-			fmt.Println(err)
 			exist = false
 		}
+		exist = true
 	}
 
 	return
@@ -129,8 +133,11 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 		return
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT hash, uuid, url, short_url FROM urls where uuid = $1", uuid)
-	defer func(rows *sql.Rows) {
+	rows, err := r.DB.NamedQuery(
+		"SELECT hash, uuid, url, short_url FROM urls u where u.`uuid` = :uuid",
+		map[string]interface{}{"uuid": uuid},
+	)
+	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
 			log.Println(err)
@@ -143,6 +150,7 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 	}
 
 	urls = map[string]*types.URL{}
+	err = rows.StructScan(&urls)
 
 	return
 }
@@ -173,6 +181,7 @@ func (r *DBRepository) migrate() {
 			uuid      varchar(256) not null,
 			url       text         not null,
 			short_url varchar(256) not null,
+    		deleted_at datetime null,
 			constraint uk
 				unique (hash, uuid)
 		)`,
