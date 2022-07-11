@@ -175,7 +175,7 @@ func (r *DBRepository) migrate() {
 			uuid      varchar(256) not null,
 			url       text         not null,
 			short_url varchar(256) not null,
-    		deletedAt datetime null
+    		deleted_at datetime DEFAULT NULL,
 			constraint uk
 				unique (hash, uuid)
 		)`,
