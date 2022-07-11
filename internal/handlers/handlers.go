@@ -198,6 +198,28 @@ func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
+// APIDeleteShortURLBatchHandler удаляет урлы из базы по идентификаторам
+func APIDeleteShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
+	var incomingData []string
+
+	// Обрабатываем входящий json
+	if err := json.NewDecoder(r.Body).Decode(&incomingData); err != nil {
+		fmt.Println(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := storage.Storage.DeleteByHash([]string{})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("ok"))
+}
+
 // GetUserURLSHandler — возвращает все сокращенные урлы пользователя.
 func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 	uuid := middlewares.UserSignedCookie.UUID
@@ -230,19 +252,6 @@ func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
 // PingHandler проверяет соединение с базой
 func PingHandler(w http.ResponseWriter, r *http.Request) {
 	err := storage.Storage.Ping()
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("ok"))
-}
-
-// DeleteUserURLSHandler удаляет урлы из базы
-func DeleteUserURLSHandler(w http.ResponseWriter, r *http.Request) {
-	err := storage.Storage.DeleteByHash([]string{})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

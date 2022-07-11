@@ -74,7 +74,7 @@ func Router() (r *chi.Mux) {
 	r.Post("/", handlers.CreateShortURLHandler)
 	r.Get("/ping", handlers.PingHandler)
 	r.Get("/api/user/urls", handlers.GetUserURLSHandler)
-	r.Delete("/api/user/urls", handlers.DeleteUserURLSHandler)
+	r.Delete("/api/user/urls", handlers.APIDeleteShortURLBatchHandler)
 	r.Post("/api/shorten/batch", handlers.APICreateShortURLBatchHandler)
 	r.Post("/api/shorten", handlers.APICreateShortURLHandler)
 	r.Get("/{hash}", handlers.GetShortURLHandler)
