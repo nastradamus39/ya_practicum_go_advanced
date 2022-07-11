@@ -45,7 +45,7 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 	}
 
 	rows, err := r.DB.NamedQuery(
-		"SELECT * FROM urls u WHERE u.`hash` = :hash LIMIT 1",
+		"SELECT * FROM urls u WHERE u.hash = :hash LIMIT 1",
 		map[string]interface{}{"hash": url.Hash},
 	)
 	defer func(rows *sqlx.Rows) {
