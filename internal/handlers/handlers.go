@@ -110,7 +110,7 @@ func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	if deletedAt != nil {
 		w.WriteHeader(http.StatusGone)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte("gone"))
 		return
 	}
 

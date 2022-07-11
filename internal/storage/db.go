@@ -55,7 +55,7 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 		}
 	}(rows)
 
-	if err != nil {
+	if rows.Err() != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -104,7 +104,7 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 		}
 	}(rows)
 
-	if err != nil {
+	if rows.Err() != nil {
 		exist = false
 		return
 	}
