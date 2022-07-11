@@ -55,7 +55,8 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 		}
 	}(rows)
 
-	if rows.Err() != nil {
+	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
