@@ -44,9 +44,11 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 		return fmt.Errorf("%w", shortenerErrors.ErrNoDBConnection)
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where 'hash' = $1", url.Hash)
-
-	defer func(rows *sql.Rows) {
+	rows, err := r.DB.NamedQuery(
+		"SELECT * FROM urls u WHERE u.`hash` = :hash LIMIT 1",
+		map[string]interface{}{"hash": url.Hash},
+	)
+	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
 			log.Println(err)
@@ -57,10 +59,12 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 		return err
 	}
 
-	if rows.Next() {
+	u := types.URL{}
+	if rows.Next() && rows.StructScan(&u) == nil { // такой url есть - дубль
 		return fmt.Errorf("%w", shortenerErrors.ErrURLConflict)
 	}
 
+	// Новый url - сохраняем
 	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
 		VALUES (:hash, :uuid, :url, :short_url)`, url)
 
@@ -141,7 +145,7 @@ func (r *DBRepository) DeleteByHash(hash []string) (err error) {
 		err = errors.New("нет подключения к бд")
 		return
 	}
-	
+
 	return
 }
 
