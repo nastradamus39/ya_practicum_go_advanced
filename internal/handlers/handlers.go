@@ -210,11 +210,7 @@ func APIDeleteShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(incomingData) > 0 {
-		err := storage.Storage.DeleteByHash(incomingData)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		go storage.Storage.DeleteByHash(incomingData)
 	}
 
 	w.WriteHeader(http.StatusAccepted)
