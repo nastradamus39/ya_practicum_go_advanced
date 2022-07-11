@@ -105,6 +105,7 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 
 	if err != nil {
 		exist = false
+		fmt.Println(err)
 		return
 	}
 
@@ -112,6 +113,7 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 		url = &types.URL{}
 		err = rows.StructScan(url)
 		if err != nil {
+			fmt.Println(err)
 			exist = false
 		}
 	}
