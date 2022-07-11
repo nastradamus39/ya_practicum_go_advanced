@@ -78,12 +78,15 @@ func (r *DBRepository) SaveBatch(url []*types.URL) (err error) {
 	}
 
 	// PG
-	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
-	  VALUES (:hash, :uuid, :url, :short_url) ON CONFLICT (hash, uuid) DO NOTHING`, url)
+	//_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
+	//  VALUES (:hash, :uuid, :url, :short_url) ON CONFLICT (hash, uuid) DO NOTHING`, url)
 
 	// Mysql
 	//_, err = r.DB.NamedExec(`INSERT IGNORE INTO urls (hash, uuid, url, short_url)
 	//   VALUES (:hash, :uuid, :url, :short_url)`, url)
+
+	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
+	  VALUES (:hash, :uuid, :url, :short_url)`, url)
 
 	return err
 }
@@ -181,7 +184,7 @@ func (r *DBRepository) migrate() {
 			uuid      varchar(256) not null,
 			url       text         not null,
 			short_url varchar(256) not null,
-    		deleted_at datetime null,
+    		deleted_at datetime default null,
 			constraint uk
 				unique (hash, uuid)
 		)`,
