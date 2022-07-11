@@ -164,6 +164,8 @@ func (r *DBRepository) DeleteByHash(hashes []string) (err error) {
 
 	_, err = r.DB.Exec(sql)
 
+	fmt.Println(err)
+
 	return
 }
 
