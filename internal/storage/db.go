@@ -6,6 +6,7 @@ import (
 	"fmt"
 	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
 	"log"
+	"strings"
 	"time"
 
 	//_ "github.com/go-sql-driver/mysql"
@@ -76,14 +77,6 @@ func (r *DBRepository) SaveBatch(url []*types.URL) (err error) {
 		err = errors.New("нет подключения к бд")
 		return
 	}
-
-	// PG
-	//_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
-	//  VALUES (:hash, :uuid, :url, :short_url) ON CONFLICT (hash, uuid) DO NOTHING`, url)
-
-	// Mysql
-	//_, err = r.DB.NamedExec(`INSERT IGNORE INTO urls (hash, uuid, url, short_url)
-	//   VALUES (:hash, :uuid, :url, :short_url)`, url)
 
 	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
 	  VALUES (:hash, :uuid, :url, :short_url)`, url)
@@ -158,11 +151,18 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 	return
 }
 
-func (r *DBRepository) DeleteByHash(hash []string) (err error) {
+func (r *DBRepository) DeleteByHash(hashes []string) (err error) {
 	if r.DB == nil {
 		err = errors.New("нет подключения к бд")
 		return
 	}
+
+	sql := fmt.Sprintf(
+		"UPDATE urls SET deleted_at = NOW() WHERE hash IN ('%s')",
+		strings.Join(hashes, "','"),
+	)
+
+	_, err = r.DB.Exec(sql)
 
 	return
 }

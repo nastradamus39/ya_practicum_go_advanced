@@ -209,13 +209,15 @@ func APIDeleteShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := storage.Storage.DeleteByHash([]string{})
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if len(incomingData) > 0 {
+		err := storage.Storage.DeleteByHash(incomingData)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
+	w.WriteHeader(http.StatusAccepted)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("ok"))
 }
