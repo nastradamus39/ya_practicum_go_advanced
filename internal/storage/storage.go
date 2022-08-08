@@ -19,6 +19,8 @@ type repository interface {
 	FindByHash(hash string) (exist bool, url *types.URL, err error)
 	// FindByUUID ищет все ссылки пользователя с uuid
 	FindByUUID(uuid string) (exist bool, urls map[string]*types.URL, err error)
+	// DeleteByHash удаляет урлы
+	DeleteByHash([]string) (err error)
 }
 
 type store interface {
@@ -98,6 +100,12 @@ func (s *storage) Save(url *types.URL) (err error) {
 
 func (s *storage) SaveBatch(urls []*types.URL) (err error) {
 	err = s.repositories.db.SaveBatch(urls)
+
+	return
+}
+
+func (s *storage) DeleteByHash(urls []string) (err error) {
+	err = s.repositories.db.DeleteByHash(urls)
 
 	return
 }

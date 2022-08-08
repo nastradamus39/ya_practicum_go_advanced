@@ -2,11 +2,11 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
 	"log"
+	"strings"
 	"time"
 
 	//_ "github.com/go-sql-driver/mysql"
@@ -44,9 +44,11 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 		return fmt.Errorf("%w", shortenerErrors.ErrNoDBConnection)
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT * FROM urls where 'hash' = $1", url.Hash)
-
-	defer func(rows *sql.Rows) {
+	rows, err := r.DB.NamedQuery(
+		"SELECT * FROM urls u WHERE u.hash = :hash LIMIT 1",
+		map[string]interface{}{"hash": url.Hash},
+	)
+	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
 			log.Println(err)
@@ -54,13 +56,16 @@ func (r *DBRepository) Save(url *types.URL) (err error) {
 	}(rows)
 
 	if rows.Err() != nil {
+		fmt.Println(err)
 		return err
 	}
 
-	if rows.Next() {
+	u := types.URL{}
+	if rows.Next() && rows.StructScan(&u) == nil { // такой url есть - дубль
 		return fmt.Errorf("%w", shortenerErrors.ErrURLConflict)
 	}
 
+	// Новый url - сохраняем
 	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
 		VALUES (:hash, :uuid, :url, :short_url)`, url)
 
@@ -74,12 +79,13 @@ func (r *DBRepository) SaveBatch(url []*types.URL) (err error) {
 	}
 
 	_, err = r.DB.NamedExec(`INSERT INTO urls (hash, uuid, url, short_url)
-        VALUES (:hash, :uuid, :url, :short_url)`, url)
+	  VALUES (:hash, :uuid, :url, :short_url)`, url)
 
 	return err
 }
 
 func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err error) {
+
 	if r.DB == nil {
 		exist = false
 		url = nil
@@ -87,9 +93,11 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 		return
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT u.hash, u.uuid, u.url, u.short_url FROM urls u WHERE u.hash = $1 limit $2", hash, 1)
-
-	defer func(rows *sql.Rows) {
+	rows, err := r.DB.NamedQuery(
+		"SELECT * FROM urls u WHERE u.hash = :hash LIMIT 1",
+		map[string]interface{}{"hash": hash},
+	)
+	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
 			log.Println(err)
@@ -101,10 +109,13 @@ func (r *DBRepository) FindByHash(hash string) (exist bool, url *types.URL, err 
 		return
 	}
 
-	url = &types.URL{}
-	for rows.Next() {
+	if rows.Next() {
+		url = &types.URL{}
+		err = rows.StructScan(url)
+		if err != nil {
+			exist = false
+		}
 		exist = true
-		rows.Scan(&url.Hash, &url.UUID, &url.URL, &url.ShortURL)
 	}
 
 	return
@@ -118,8 +129,11 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 		return
 	}
 
-	rows, err := r.DB.QueryContext(context.Background(), "SELECT hash, uuid, url, short_url FROM urls where uuid = $1", uuid)
-	defer func(rows *sql.Rows) {
+	rows, err := r.DB.NamedQuery(
+		"SELECT hash, uuid, url, short_url FROM urls u where u.`uuid` = :uuid",
+		map[string]interface{}{"uuid": uuid},
+	)
+	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
 			log.Println(err)
@@ -132,6 +146,25 @@ func (r *DBRepository) FindByUUID(uuid string) (exist bool, urls map[string]*typ
 	}
 
 	urls = map[string]*types.URL{}
+	err = rows.StructScan(&urls)
+
+	return
+}
+
+func (r *DBRepository) DeleteByHash(hashes []string) (err error) {
+	if r.DB == nil {
+		err = errors.New("нет подключения к бд")
+		return
+	}
+
+	sql := fmt.Sprintf(
+		"UPDATE urls SET deleted_at = NOW() WHERE hash IN ('%s')",
+		strings.Join(hashes, "','"),
+	)
+
+	_, err = r.DB.Exec(sql)
+
+	fmt.Println(err)
 
 	return
 }
@@ -149,10 +182,11 @@ func (r *DBRepository) Ping() (err error) {
 func (r *DBRepository) migrate() {
 	_, err := r.DB.Exec(`CREATE TABLE IF NOT EXISTS urls
 		(
-			hash      varchar(256) not null,
-			uuid      varchar(256) not null,
-			url       text         not null,
-			short_url varchar(256) not null,
+			hash       varchar(256) not null,
+			uuid       varchar(256) not null,
+			url        text         not null,
+			short_url  varchar(256) not null,
+    		deleted_at date         null,
 			constraint uk
 				unique (hash, uuid)
 		)`,
