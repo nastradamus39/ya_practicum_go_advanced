@@ -82,6 +82,26 @@ func TestPostUrl(t *testing.T) {
 				statusCode: http.StatusNoContent,
 			},
 		},
+		{
+			name:   "Пакетное сокращение ссылок",
+			url:    "/api/shorten/batch",
+			method: http.MethodPost,
+			body:   strings.NewReader(`[{"correlation_id" : "as7d6as8d68as67dausghdjahsgd", "original_url" : "http://yandex.ru?x=1&y=2"}]`),
+			want: want{
+				statusCode: http.StatusCreated,
+				response:   `[{"correlation_id":"as7d6as8d68as67dausghdjahsgd","short_url":"http://localhost:8080/as7d6as8d68as67dausghdjahsgd"}]`,
+			},
+		},
+		{
+			name:   "Api сокращение ссылок",
+			url:    "/api/shorten",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"correlation_id" : "as7d6as8d68as67dausghdjahsgd","original_url" : "http://yandex.ru?x=1&y=2"}`),
+			want: want{
+				statusCode: http.StatusCreated,
+				response:   `{"result":"http://localhost:8080/d41d8cd98f00b204e9800998ecf8427e"}`,
+			},
+		},
 	}
 
 	for _, tt := range tests {
