@@ -32,6 +32,8 @@ type store interface {
 	FindByHash(hash string) (exist bool, url *types.URL, err error)
 	// FindByUUID ищет все ссылки пользователя с uuid
 	FindByUUID(uuid string) (urls map[string]*types.URL, err error)
+	// DeleteByHash удаляет урлы
+	DeleteByHash([]string) (err error)
 	// Drop чистит memory хранилище, удаляет файл
 	Drop()
 	// Ping Проверяет подключение к базе

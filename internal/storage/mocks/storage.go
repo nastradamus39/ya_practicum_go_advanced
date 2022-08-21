@@ -34,6 +34,20 @@ func (m *Mockrepository) EXPECT() *MockrepositoryMockRecorder {
 	return m.recorder
 }
 
+// DeleteByHash mocks base method.
+func (m *Mockrepository) DeleteByHash(arg0 []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteByHash", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteByHash indicates an expected call of DeleteByHash.
+func (mr *MockrepositoryMockRecorder) DeleteByHash(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByHash", reflect.TypeOf((*Mockrepository)(nil).DeleteByHash), arg0)
+}
+
 // FindByHash mocks base method.
 func (m *Mockrepository) FindByHash(hash string) (bool, *types.URL, error) {
 	m.ctrl.T.Helper()
@@ -101,6 +115,20 @@ func NewMockstore(ctrl *gomock.Controller) *Mockstore {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *Mockstore) EXPECT() *MockstoreMockRecorder {
 	return m.recorder
+}
+
+// DeleteByHash mocks base method.
+func (m *Mockstore) DeleteByHash(arg0 []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteByHash", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteByHash indicates an expected call of DeleteByHash.
+func (mr *MockstoreMockRecorder) DeleteByHash(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByHash", reflect.TypeOf((*Mockstore)(nil).DeleteByHash), arg0)
 }
 
 // Drop mocks base method.
