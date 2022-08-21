@@ -176,14 +176,11 @@ func doRequest(method string, path string, body io.Reader) error {
 		return http.ErrUseLastResponse
 	}
 
-	resp, _ := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
-		}
-	}(resp.Body)
+	if err == nil {
+		resp.Body.Close()
+	}
 
 	return nil
 }
