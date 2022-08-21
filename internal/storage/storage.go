@@ -2,15 +2,15 @@ package storage
 
 import (
 	"errors"
-	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
 	"log"
 	"os"
 
+	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 )
 
 // Storage Хранилище ссылок
-var Storage *storage
+var Storage store
 
 type repository interface {
 	// Save сохраняет объект ссылки в хранилище
@@ -24,12 +24,16 @@ type repository interface {
 type store interface {
 	// Save сохраняет объект ссылки в хранилище
 	Save(url *types.URL) error
+	// SaveBatch сохраняет массив объектов ссылок в хранилище
+	SaveBatch(urls []*types.URL) (err error)
 	// FindByHash ищет урл в хранилище по хешу
 	FindByHash(hash string) (exist bool, url *types.URL, err error)
 	// FindByUUID ищет все ссылки пользователя с uuid
 	FindByUUID(uuid string) (urls map[string]*types.URL, err error)
 	// Drop чистит memory хранилище, удаляет файл
 	Drop()
+	// Ping Проверяет подключение к базе
+	Ping() (err error)
 }
 
 type repositories struct {
@@ -44,7 +48,7 @@ type storage struct {
 }
 
 func New(cfg *types.Config) (err error) {
-	Storage = &storage{
+	st := &storage{
 		cfg: cfg,
 	}
 
@@ -56,11 +60,13 @@ func New(cfg *types.Config) (err error) {
 	}
 
 	// Инициируем репозитории
-	Storage.repositories = repositories{
+	st.repositories = repositories{
 		memory: mr,
 		file:   fr,
 		db:     dbr,
 	}
+
+	Storage = st
 
 	return nil
 }

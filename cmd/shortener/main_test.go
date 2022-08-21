@@ -121,6 +121,68 @@ func TestPostUrl(t *testing.T) {
 	}
 }
 
+func BenchmarkPostUrl(b *testing.B) {
+	setup()
+
+	tests := []struct {
+		name   string
+		url    string
+		method string
+		body   io.Reader
+	}{
+		{
+			name:   "Получение короткой ссылки",
+			url:    "/",
+			method: http.MethodPost,
+			body:   strings.NewReader("http://jwlqct1udntv.com/xr0cz5fshffj/pimnbpv/otw2im3fudstqi1"),
+		},
+		{
+			name:   "Получение полной ссылки",
+			url:    "/580c5ab5ef6a4f27b3da9956ae192f4f",
+			method: http.MethodGet,
+			body:   nil,
+		},
+		{
+			name:   "Все ссылки пользователя",
+			url:    "/api/user/urls",
+			method: http.MethodGet,
+			body:   nil,
+		},
+		{
+			name:   "Пакетное сокращение ссылок",
+			url:    "/api/shorten/batch",
+			method: http.MethodPost,
+			body:   strings.NewReader(`[{"correlation_id" : "as7d6as8d68as67dausghdjahsgd", "original_url" : "http://yandex.ru?x=1&y=2"}]`),
+		},
+		{
+			name:   "Api сокращение ссылок",
+			url:    "/api/shorten",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"correlation_id" : "as7d6as8d68as67dausghdjahsgd","original_url" : "http://yandex.ru?x=1&y=2"}`),
+		},
+	}
+
+	for _, tt := range tests {
+		for i := 0; i < b.N; i++ {
+			doRequest(tt.method, tt.url, tt.body)
+		}
+	}
+}
+
+func doRequest(method string, path string, body io.Reader) error {
+	req, _ := http.NewRequest(method, S.Server.URL+path, body)
+
+	http.DefaultClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	resp, _ := http.DefaultClient.Do(req)
+
+	defer resp.Body.Close()
+
+	return nil
+}
+
 func testRequest(t *testing.T, method string, path string, body io.Reader) (*http.Response, string) {
 	req, err := http.NewRequest(method, S.Server.URL+path, body)
 	require.NoError(t, err)
