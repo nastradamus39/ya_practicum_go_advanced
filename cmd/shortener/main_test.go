@@ -178,7 +178,12 @@ func doRequest(method string, path string, body io.Reader) error {
 
 	resp, _ := http.DefaultClient.Do(req)
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
 
 	return nil
 }
