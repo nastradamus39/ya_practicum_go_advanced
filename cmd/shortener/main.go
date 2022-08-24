@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"net/http/pprof"
 	"os"
 
 	"github.com/caarlos0/env/v6"
@@ -78,6 +79,21 @@ func Router() (r *chi.Mux) {
 	r.Post("/api/shorten/batch", handlers.APICreateShortURLBatchHandler)
 	r.Post("/api/shorten", handlers.APICreateShortURLHandler)
 	r.Get("/{hash}", handlers.GetShortURLHandler)
+
+	// эндпоинты для профилировщика
+	r.Get("/debug/pprof/", pprof.Index)
+
+	r.Get("/debug/pprof/allocs", pprof.Index)
+	r.Get("/debug/pprof/block", pprof.Index)
+	r.Get("/debug/pprof/goroutine", pprof.Index)
+	r.Get("/debug/pprof/heap", pprof.Index)
+	r.Get("/debug/pprof/mutex", pprof.Index)
+	r.Get("/debug/pprof/threadcreate", pprof.Index)
+
+	r.Get("/debug/pprof/cmdline", pprof.Cmdline)
+	r.Get("/debug/pprof/profile", pprof.Profile)
+	r.Get("/debug/pprof/symbol", pprof.Symbol)
+	r.Get("/debug/pprof/trace", pprof.Trace)
 
 	return r
 }
