@@ -2,29 +2,37 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"flag"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"os/signal"
 	"time"
 
+	"github.com/caarlos0/env/v6"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 )
 
 func main() {
 	r := Router()
+	srv := http.Server{}
 
 	// Логер
 	flog, err := os.OpenFile(`server.log`, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -35,6 +43,15 @@ func main() {
 	defer flog.Close()
 
 	log.SetOutput(flog)
+
+	// Значения из конфига
+	var configPath string
+	flag.StringVar(&configPath, "c", "", "Путь к конфигу")
+	flag.Parse()
+	err = LoadConfig(&app.Cfg, configPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Переменные окружения в конфиг
 	err = env.Parse(&app.Cfg)
@@ -93,12 +110,18 @@ func main() {
 		Type:  "CERTIFICATE",
 		Bytes: certBytes,
 	})
+	certFile, err := os.OpenFile("./cert", os.O_CREATE|os.O_WRONLY, 0777)
+	certFile.Write(certPEM.Bytes())
+	certFile.Close()
 
 	var privateKeyPEM bytes.Buffer
 	pem.Encode(&privateKeyPEM, &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 	})
+	keyFile, err := os.OpenFile("./key", os.O_CREATE|os.O_WRONLY, 0777)
+	keyFile.Write(privateKeyPEM.Bytes())
+	keyFile.Close()
 
 	// инициируем хранилище
 	err = storage.New(&app.Cfg)
@@ -107,12 +130,48 @@ func main() {
 		return
 	}
 
+	// через этот канал сообщим основному потоку, что соединения закрыты
+	idleConnsClosed := make(chan struct{})
+
+	// канал для перенаправления прерываний
+	// поскольку нужно отловить всего одно прерывание,
+	// ёмкости 1 для канала будет достаточно
+	sigint := make(chan os.Signal, 1)
+	// регистрируем перенаправление прерываний
+	signal.Notify(sigint, os.Interrupt)
+
+	go func() {
+		// читаем из канала прерываний
+		// поскольку нужно прочитать только одно прерывание,
+		// можно обойтись без цикла
+		<-sigint
+		// получили сигнал os.Interrupt, запускаем процедуру graceful shutdown
+		if err := srv.Shutdown(context.Background()); err != nil {
+			// ошибки закрытия Listener
+			log.Printf("HTTP server Shutdown: %v", err)
+		}
+		// сообщаем основному потоку,
+		// что все сетевые соединения обработаны и закрыты
+		close(idleConnsClosed)
+	}()
+
 	// запускаем сервер
-	err = http.ListenAndServeTLS(app.Cfg.ServerAddress, string(certBytes), string(privateKey), r)
-	if err != nil {
-		log.Printf("Не удалось запустить сервер. %s", err)
-		return
+	srv.Addr = app.Cfg.ServerAddress
+	srv.Handler = r
+	if err := srv.ListenAndServeTLS("./cert", "./key"); err != http.ErrServerClosed {
+		// ошибки старта или остановки Listener
+		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
+	// ждём завершения процедуры graceful shutdown
+	<-idleConnsClosed
+
+	// ждём завершения процедуры graceful shutdown
+	<-idleConnsClosed
+	// получили оповещение о завершении
+	// здесь можно освобождать ресурсы перед выходом,
+	// например закрыть соединение с базой данных,
+	// закрыть открытые файлы
+	log.Fatalf("Server Shutdown gracefully")
 }
 
 func Router() (r *chi.Mux) {
@@ -150,4 +209,13 @@ func Router() (r *chi.Mux) {
 	r.Get("/debug/pprof/trace", pprof.Trace)
 
 	return r
+}
+
+func LoadConfig(config *types.Config, path string) error {
+	data, _ := ioutil.ReadFile(path)
+	err := json.Unmarshal(data, &config)
+	if err != nil {
+		return err
+	}
+	return nil
 }
