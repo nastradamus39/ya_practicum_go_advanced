@@ -20,3 +20,9 @@ type URL struct {
 	ShortURL  string         `db:"short_url"`
 	DeletedAt sql.NullString `db:"deleted_at"`
 }
+
+// Statistic - статистика
+type Statistic struct {
+	Urls  int `json:"urls"`
+	Users int `json:"users"`
+}

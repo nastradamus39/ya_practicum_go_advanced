@@ -267,3 +267,16 @@ func PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("ok"))
 }
+
+// APIStatsHandler статистика по урлам
+func APIStatsHandler(w http.ResponseWriter, r *http.Request) {
+	resp := storage.Storage.Statistic()
+
+	respString, _ := json.Marshal(resp)
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Accept", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	w.Write(respString)
+}

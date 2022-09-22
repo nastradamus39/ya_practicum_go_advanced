@@ -38,6 +38,8 @@ type store interface {
 	Drop()
 	// Ping Проверяет подключение к базе
 	Ping() (err error)
+	// Statistic Статистика
+	Statistic() types.Statistic
 }
 
 type repositories struct {
@@ -162,6 +164,15 @@ func (s *storage) FindByUUID(uuid string) (urls map[string]*types.URL, err error
 	}
 
 	return urls, nil
+}
+
+func (s *storage) Statistic() types.Statistic {
+	stat := new(types.Statistic)
+
+	stat.Urls = s.repositories.db.UrlsCount()
+	stat.Users = s.repositories.db.UsersCount()
+
+	return *stat
 }
 
 func (s *storage) Drop() {

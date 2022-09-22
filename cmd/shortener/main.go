@@ -192,6 +192,7 @@ func Router() (r *chi.Mux) {
 	r.Post("/api/shorten/batch", handlers.APICreateShortURLBatchHandler)
 	r.Post("/api/shorten", handlers.APICreateShortURLHandler)
 	r.Get("/{hash}", handlers.GetShortURLHandler)
+	r.Get("/api/internal/stats", handlers.APIStatsHandler)
 
 	// эндпоинты для профилировщика
 	r.Get("/debug/pprof/", pprof.Index)
