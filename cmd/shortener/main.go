@@ -23,11 +23,15 @@ import (
 	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"google.golang.org/grpc"
+
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+	"github.com/nastradamus39/ya_practicum_go_advanced/proto"
+	"github.com/nastradamus39/ya_practicum_go_advanced/proto/server"
 )
 
 func main() {
@@ -48,9 +52,11 @@ func main() {
 	var configPath string
 	flag.StringVar(&configPath, "c", "", "Путь к конфигу")
 	flag.Parse()
-	err = LoadConfig(&app.Cfg, configPath)
-	if err != nil {
-		log.Fatal(err)
+	if configPath != "" {
+		err = LoadConfig(&app.Cfg, configPath)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Переменные окружения в конфиг
@@ -155,6 +161,27 @@ func main() {
 		close(idleConnsClosed)
 	}()
 
+	// получаем запрос gRPC
+	go func() {
+		log.Printf("Starting grpc")
+		// определяем порт для grp
+		listen, err := net.Listen("tcp", ":3200")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// создаём gRPC-сервер без зарегистрированной службы
+		s := grpc.NewServer()
+
+		// регистрируем сервис
+		proto.RegisterUrlsServer(s, &server.ShortenerServer{})
+		if err := s.Serve(listen); err != nil {
+			log.Fatal(err)
+			return
+		}
+		log.Printf("Сервер gRPC начал работу")
+	}()
+
 	// запускаем сервер
 	srv.Addr = app.Cfg.ServerAddress
 	srv.Handler = r
@@ -162,6 +189,7 @@ func main() {
 		// ошибки старта или остановки Listener
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
+
 	// ждём завершения процедуры graceful shutdown
 	<-idleConnsClosed
 
@@ -185,14 +213,14 @@ func Router() (r *chi.Mux) {
 	r.Use(middlewares.Decompress)
 	r.Use(middlewares.UserCookie)
 
-	r.Post("/", handlers.CreateShortURLHandler)
-	r.Get("/ping", handlers.PingHandler)
-	r.Get("/api/user/urls", handlers.GetUserURLSHandler)
-	r.Delete("/api/user/urls", handlers.APIDeleteShortURLBatchHandler)
-	r.Post("/api/shorten/batch", handlers.APICreateShortURLBatchHandler)
-	r.Post("/api/shorten", handlers.APICreateShortURLHandler)
-	r.Get("/{hash}", handlers.GetShortURLHandler)
-	r.Get("/api/internal/stats", handlers.APIStatsHandler)
+	r.Post("/", handlers.CreateShortURLHTTPHandler)
+	r.Get("/ping", handlers.PingHTTPHandler)
+	r.Get("/api/user/urls", handlers.GetUserURLSHTTPHandler)
+	r.Delete("/api/user/urls", handlers.APIDeleteShortURLBatchHTTPHandler)
+	r.Post("/api/shorten/batch", handlers.APICreateShortURLBatchHTTPHandler)
+	r.Post("/api/shorten", handlers.APICreateShortURLHTTPHandler)
+	r.Get("/{hash}", handlers.GetShortURLHTTPHandler)
+	r.Get("/api/internal/stats", handlers.APIStatsHTTPHandler)
 
 	// эндпоинты для профилировщика
 	r.Get("/debug/pprof/", pprof.Index)

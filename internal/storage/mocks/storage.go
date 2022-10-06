@@ -100,6 +100,11 @@ type Mockstore struct {
 	recorder *MockstoreMockRecorder
 }
 
+func (m *Mockstore) Statistic() types.Statistic {
+	//TODO implement me
+	panic("implement me")
+}
+
 // MockstoreMockRecorder is the mock recorder for Mockstore.
 type MockstoreMockRecorder struct {
 	mock *Mockstore

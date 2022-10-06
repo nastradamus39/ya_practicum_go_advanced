@@ -22,3 +22,12 @@ vendor/
 .idea
 .vscode
 ./server.log
+/config.json
+/coverage.out
+/cert
+/db
+/key
+/server.log
+/main
+
+/cmd/shortener/server.log

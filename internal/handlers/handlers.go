@@ -1,282 +1,122 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
-
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/app"
 	shortenerErrors "github.com/nastradamus39/ya_practicum_go_advanced/internal/errors"
-	"github.com/nastradamus39/ya_practicum_go_advanced/internal/middlewares"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/storage"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/utils"
-
-	"github.com/go-chi/chi/v5"
+	"log"
 )
 
-// url для сокращения
-type url struct {
-	URL string `json:"url"`
-}
-
-// batchURL в пакетной обработке
-type batchURL struct {
-	CorrelationID string `json:"correlation_id"`
-	OriginalURL   string `json:"original_url"`
-}
-
-// shortenBatchURL сокращенный урл в пакетной обработке
-type shortenBatchURL struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
-}
-
-// Сокращенный url
-type response struct {
-	URL string `json:"result"`
-}
-
-// URL пользователя
-type userURL struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-}
-
 // CreateShortURLHandler — создает короткий урл.
-func CreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
-	originalURL, _ := ioutil.ReadAll(r.Body)
+func CreateShortURLHandler(originalURL string, uuid string) (url *types.URL, err error) {
+	hash, shortURL := utils.GetShortURL(originalURL)
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Printf("CreateShortURLHandler. %s", err)
-		}
-	}(r.Body)
-
-	uuid := middlewares.UserSignedCookie.UUID
-	hash, shortURL := utils.GetShortURL(string(originalURL))
-
-	url := &types.URL{
+	url = &types.URL{
 		UUID:     uuid,
 		Hash:     hash,
-		URL:      string(originalURL),
+		URL:      originalURL,
 		ShortURL: shortURL,
 	}
 
-	err := storage.Storage.Save(url)
+	err = storage.Storage.Save(url)
 
 	// Если такой url уже есть - отдаем соответствующий статус
 	if errors.Is(err, shortenerErrors.ErrURLConflict) {
-		w.WriteHeader(http.StatusConflict)
-		w.Write([]byte(url.ShortURL))
-		return
+		return url, err
 	}
 
 	// Другие ошибки при сохранении в хранилище
 	if err != nil {
 		log.Printf("CreateShortURLHandler. Не удалось сохранить урл в хранилище. %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(url.ShortURL))
+	return url, nil
 }
 
 // GetShortURLHandler — возвращает полный урл по короткому.
-func GetShortURLHandler(w http.ResponseWriter, r *http.Request) {
-	hash := chi.URLParam(r, "hash")
+func GetShortURLHandler(hash string) (url *types.URL, err error) {
+	var exist bool
 
-	exist, url, err := storage.Storage.FindByHash(hash)
+	exist, url, err = storage.Storage.FindByHash(hash)
 
 	if !exist {
-		w.WriteHeader(http.StatusNotFound)
-		return
+		return nil, shortenerErrors.ErrURLNotFound
 	}
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 
 	deletedAt, _ := url.DeletedAt.Value()
 
 	if deletedAt != nil {
-		w.WriteHeader(http.StatusGone)
-		w.Write([]byte("gone"))
-		return
+		return nil, shortenerErrors.ErrURLDeleted
 	}
 
-	w.Header().Add("Location", url.URL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
-	w.Write([]byte(url.URL))
+	return url, nil
 }
 
 // APICreateShortURLHandler Api для создания короткого урла
-func APICreateShortURLHandler(w http.ResponseWriter, r *http.Request) {
-	u := url{}
+func APICreateShortURLHandler(originalURL string, uuid string) (url *types.URL, err error) {
+	hash, shortURL := utils.GetShortURL(originalURL)
 
-	// Обрабатываем входящий json
-	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	uuid := middlewares.UserSignedCookie.UUID
-	hash, shortURL := utils.GetShortURL(string(u.URL))
-
-	url := &types.URL{
+	url = &types.URL{
 		UUID:     uuid,
 		Hash:     hash,
-		URL:      u.URL,
+		URL:      originalURL,
 		ShortURL: shortURL,
 	}
 
-	err := storage.Storage.Save(url)
-
-	// Если такой url уже есть - отдаем соответствующий статус
-	if errors.Is(err, shortenerErrors.ErrURLConflict) {
-		resp, _ := json.Marshal(response{URL: url.ShortURL})
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusConflict)
-		w.Write(resp)
-		return
-	}
+	err = storage.Storage.Save(url)
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		return url, err
 	}
 
-	resp, _ := json.Marshal(response{URL: url.ShortURL})
-
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Accept", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write(resp)
+	return url, nil
 }
 
 // APICreateShortURLBatchHandler Api для создания коротких урлов пачками
-func APICreateShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
-	var incomingData []batchURL
-
-	// Обрабатываем входящий json
-	if err := json.NewDecoder(r.Body).Decode(&incomingData); err != nil {
-		fmt.Println(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var urls []*types.URL
-	var resp []*shortenBatchURL
-	uuid := middlewares.UserSignedCookie.UUID
-
-	for _, url := range incomingData {
-		shortURL := fmt.Sprintf("%s/%s", app.Cfg.BaseURL, url.CorrelationID)
-
-		urls = append(urls, &types.URL{
-			UUID:     uuid,
-			Hash:     url.CorrelationID,
-			URL:      url.OriginalURL,
-			ShortURL: shortURL,
-		})
-		resp = append(resp, &shortenBatchURL{
-			CorrelationID: url.CorrelationID,
-			ShortURL:      shortURL,
-		})
+func APICreateShortURLBatchHandler(urls []*types.URL) ([]*types.URL, error) {
+	// Вычисляем короткий url для каждой ссылки
+	for _, url := range urls {
+		url.ShortURL = fmt.Sprintf("%s/%s", app.Cfg.BaseURL, url.Hash)
 	}
 
 	err := storage.Storage.SaveBatch(urls)
 	if err != nil {
 		fmt.Println(err)
+		return nil, err
 	}
 
-	response, _ := json.Marshal(resp)
-
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Accept", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write(response)
+	return urls, nil
 }
 
 // APIDeleteShortURLBatchHandler удаляет урлы из базы по идентификаторам
-func APIDeleteShortURLBatchHandler(w http.ResponseWriter, r *http.Request) {
-	var incomingData []string
-
-	// Обрабатываем входящий json
-	if err := json.NewDecoder(r.Body).Decode(&incomingData); err != nil {
-		fmt.Println(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+func APIDeleteShortURLBatchHandler(hashes []string) {
+	if len(hashes) > 0 {
+		go storage.Storage.DeleteByHash(hashes)
 	}
-
-	if len(incomingData) > 0 {
-		go storage.Storage.DeleteByHash(incomingData)
-	}
-
-	w.WriteHeader(http.StatusAccepted)
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("ok"))
-}
-
-// GetUserURLSHandler — возвращает все сокращенные урлы пользователя.
-func GetUserURLSHandler(w http.ResponseWriter, r *http.Request) {
-	uuid := middlewares.UserSignedCookie.UUID
-
-	urls, _ := storage.Storage.FindByUUID(uuid)
-
-	if len(urls) == 0 {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	resp := make([]userURL, 0, len(urls))
-
-	for _, url := range urls {
-		resp = append(resp, userURL{
-			ShortURL:    url.ShortURL,
-			OriginalURL: url.URL,
-		})
-	}
-
-	respString, _ := json.Marshal(resp)
-
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Accept", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	w.Write(respString)
-}
-
-// PingHandler проверяет соединение с базой
-func PingHandler(w http.ResponseWriter, r *http.Request) {
-	err := storage.Storage.Ping()
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("ok"))
 }
 
 // APIStatsHandler статистика по урлам
-func APIStatsHandler(w http.ResponseWriter, r *http.Request) {
-	resp := storage.Storage.Statistic()
+func APIStatsHandler() (statistic types.Statistic) {
+	return storage.Storage.Statistic()
+}
 
-	respString, _ := json.Marshal(resp)
+// GetUserURLSHandler — возвращает все сокращенные урлы пользователя.
+func GetUserURLSHandler(uuid string) (urls map[string]*types.URL, err error) {
+	urls, err = storage.Storage.FindByUUID(uuid)
 
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Accept", "application/json")
-	w.WriteHeader(http.StatusOK)
+	return urls, err
+}
 
-	w.Write(respString)
+// PingHandler проверяет соединение с базой
+func PingHandler() (err error) {
+	return storage.Storage.Ping()
 }
