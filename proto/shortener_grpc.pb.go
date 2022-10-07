@@ -24,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 type UrlsClient interface {
 	CreateShortURLHandler(ctx context.Context, in *AddUrlRequest, opts ...grpc.CallOption) (*AddUrlResponse, error)
 	GetShortURLHandler(ctx context.Context, in *GetUrlRequest, opts ...grpc.CallOption) (*GetUrlResponse, error)
+	APICreateShortURLHandler(ctx context.Context, in *APICreateShortURLRequest, opts ...grpc.CallOption) (*APICreateShortURLResponse, error)
+	APICreateShortURLBatchHandler(ctx context.Context, in *APICreateShortURLBatchRequest, opts ...grpc.CallOption) (*APICreateShortURLBatchResponse, error)
 }
 
 type urlsClient struct {
@@ -52,12 +54,32 @@ func (c *urlsClient) GetShortURLHandler(ctx context.Context, in *GetUrlRequest, 
 	return out, nil
 }
 
+func (c *urlsClient) APICreateShortURLHandler(ctx context.Context, in *APICreateShortURLRequest, opts ...grpc.CallOption) (*APICreateShortURLResponse, error) {
+	out := new(APICreateShortURLResponse)
+	err := c.cc.Invoke(ctx, "/shortener.Urls/APICreateShortURLHandler", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *urlsClient) APICreateShortURLBatchHandler(ctx context.Context, in *APICreateShortURLBatchRequest, opts ...grpc.CallOption) (*APICreateShortURLBatchResponse, error) {
+	out := new(APICreateShortURLBatchResponse)
+	err := c.cc.Invoke(ctx, "/shortener.Urls/APICreateShortURLBatchHandler", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UrlsServer is the server API for Urls service.
 // All implementations must embed UnimplementedUrlsServer
 // for forward compatibility
 type UrlsServer interface {
 	CreateShortURLHandler(context.Context, *AddUrlRequest) (*AddUrlResponse, error)
 	GetShortURLHandler(context.Context, *GetUrlRequest) (*GetUrlResponse, error)
+	APICreateShortURLHandler(context.Context, *APICreateShortURLRequest) (*APICreateShortURLResponse, error)
+	APICreateShortURLBatchHandler(context.Context, *APICreateShortURLBatchRequest) (*APICreateShortURLBatchResponse, error)
 	mustEmbedUnimplementedUrlsServer()
 }
 
@@ -70,6 +92,12 @@ func (UnimplementedUrlsServer) CreateShortURLHandler(context.Context, *AddUrlReq
 }
 func (UnimplementedUrlsServer) GetShortURLHandler(context.Context, *GetUrlRequest) (*GetUrlResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetShortURLHandler not implemented")
+}
+func (UnimplementedUrlsServer) APICreateShortURLHandler(context.Context, *APICreateShortURLRequest) (*APICreateShortURLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method APICreateShortURLHandler not implemented")
+}
+func (UnimplementedUrlsServer) APICreateShortURLBatchHandler(context.Context, *APICreateShortURLBatchRequest) (*APICreateShortURLBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method APICreateShortURLBatchHandler not implemented")
 }
 func (UnimplementedUrlsServer) mustEmbedUnimplementedUrlsServer() {}
 
@@ -120,6 +148,42 @@ func _Urls_GetShortURLHandler_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Urls_APICreateShortURLHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(APICreateShortURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UrlsServer).APICreateShortURLHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/shortener.Urls/APICreateShortURLHandler",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UrlsServer).APICreateShortURLHandler(ctx, req.(*APICreateShortURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Urls_APICreateShortURLBatchHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(APICreateShortURLBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UrlsServer).APICreateShortURLBatchHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/shortener.Urls/APICreateShortURLBatchHandler",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UrlsServer).APICreateShortURLBatchHandler(ctx, req.(*APICreateShortURLBatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Urls_ServiceDesc is the grpc.ServiceDesc for Urls service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +198,14 @@ var Urls_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetShortURLHandler",
 			Handler:    _Urls_GetShortURLHandler_Handler,
+		},
+		{
+			MethodName: "APICreateShortURLHandler",
+			Handler:    _Urls_APICreateShortURLHandler_Handler,
+		},
+		{
+			MethodName: "APICreateShortURLBatchHandler",
+			Handler:    _Urls_APICreateShortURLBatchHandler_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

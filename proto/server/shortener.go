@@ -2,7 +2,8 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"github.com/nastradamus39/ya_practicum_go_advanced/internal/types"
+	"log"
 
 	"github.com/nastradamus39/ya_practicum_go_advanced/internal/handlers"
 	proto "github.com/nastradamus39/ya_practicum_go_advanced/proto"
@@ -15,7 +16,7 @@ type ShortenerServer struct {
 	proto.UnimplementedUrlsServer
 }
 
-// CreateShortURLHandler реализует интерфейс добавления пользователя.
+// CreateShortURLHandler создает короткий url
 func (s *ShortenerServer) CreateShortURLHandler(ctx context.Context, in *proto.AddUrlRequest) (*proto.AddUrlResponse, error) {
 	var response proto.AddUrlResponse
 
@@ -31,11 +32,8 @@ func (s *ShortenerServer) CreateShortURLHandler(ctx context.Context, in *proto.A
 	return &response, nil
 }
 
-// GetShortURLHandler реализует интерфейс добавления пользователя.
+// GetShortURLHandler возвращает короткий url
 func (s *ShortenerServer) GetShortURLHandler(ctx context.Context, in *proto.GetUrlRequest) (*proto.GetUrlResponse, error) {
-	fmt.Println("GetShortURLHandler")
-	return nil, nil
-
 	var response proto.GetUrlResponse
 
 	url, err := handlers.GetShortURLHandler(in.Hash)
@@ -46,4 +44,40 @@ func (s *ShortenerServer) GetShortURLHandler(ctx context.Context, in *proto.GetU
 	}
 
 	return &response, nil
+}
+
+// APICreateShortURLHandler возвращает короткий url
+func (s *ShortenerServer) APICreateShortURLHandler(ctx context.Context, in *proto.APICreateShortURLRequest) (*proto.APICreateShortURLResponse, error) {
+	var response proto.APICreateShortURLResponse
+
+	url, err := handlers.GetShortURLHandler(in.OriginalURL)
+
+	if err == nil {
+		response.ShortURL = url.ShortURL
+		response.URL = url.URL
+		response.Hash = url.Hash
+		return &response, nil
+	}
+
+	return &response, nil
+}
+
+// APICreateShortURLBatchHandler апи пакетного создания url
+func (s *ShortenerServer) APICreateShortURLBatchHandler(ctx context.Context, in *proto.APICreateShortURLBatchRequest) (*proto.APICreateShortURLBatchResponse, error) {
+	var response proto.APICreateShortURLBatchResponse
+	var urls []*types.URL
+
+	for _, url := range in.Urls {
+		u, e := handlers.GetShortURLHandler(url)
+
+		if e == nil {
+			urls = append(urls, u)
+		} else {
+			log.Println(e)
+		}
+	}
+
+	//r, e := handlers.APICreateShortURLBatchHandler(urls)
+
+	return nil, nil
 }
