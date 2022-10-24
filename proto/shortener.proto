@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package shortener;
+
+option go_package = "shortener/proto";
+
+// CreateShortURLHandler
+message AddUrlRequest {
+  string url = 1;
+  string uuid = 2;
+}
+message AddUrlResponse {
+  string error = 1; // ошибка
+  string url = 2; //
+}
+
+
+// GetShortURLHandler
+message GetUrlRequest {
+  string hash = 1;
+}
+message GetUrlResponse {
+  string url = 1;
+}
+
+
+// APICreateShortURLHandler
+message APICreateShortURLRequest {
+  string originalURL = 1;
+  string uuid = 2;
+}
+message APICreateShortURLResponse {
+    string Hash = 1;
+    string URL = 2;
+    string ShortURL = 3;
+}
+
+
+// APICreateShortURLBatchHandler
+message APICreateShortURLBatchRequest {
+  repeated string urls = 1;
+  string uuid = 2;
+}
+message APICreateShortURLBatchResponse {
+  string Hash = 1;
+  string URL = 2;
+  string ShortURL = 3;
+}
+
+service Urls {
+  rpc CreateShortURLHandler(AddUrlRequest) returns (AddUrlResponse);
+  rpc GetShortURLHandler(GetUrlRequest) returns (GetUrlResponse);
+  rpc APICreateShortURLHandler(APICreateShortURLRequest) returns (APICreateShortURLResponse);
+  rpc APICreateShortURLBatchHandler(APICreateShortURLBatchRequest) returns (APICreateShortURLBatchResponse);
+}

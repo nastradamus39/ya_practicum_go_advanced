@@ -169,6 +169,38 @@ func (r *DBRepository) DeleteByHash(hashes []string) (err error) {
 	return
 }
 
+func (r *DBRepository) UsersCount() int {
+	if r.DB == nil {
+		return 0
+	}
+
+	var cnt int
+	err := r.DB.Get(&cnt, "select count(DISTINCT(uuid)) as cnt from urls")
+
+	if err != nil {
+		log.Println(err)
+		return 0
+	}
+
+	return cnt
+}
+
+func (r *DBRepository) UrlsCount() int {
+	if r.DB == nil {
+		return 0
+	}
+
+	var cnt int
+	err := r.DB.Get(&cnt, "select count(*) as cnt from urls")
+
+	if err != nil {
+		log.Println(err)
+		return 0
+	}
+
+	return cnt
+}
+
 func (r *DBRepository) Ping() (err error) {
 	if r.DB == nil {
 		return errors.New("нет подключения к бд")

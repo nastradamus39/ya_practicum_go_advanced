@@ -43,7 +43,7 @@ func (s *HandlersTestSuite) TestCreateShortURLHandler() {
 	)
 	w := httptest.NewRecorder()
 
-	CreateShortURLHandler(w, request)
+	CreateShortURLHTTPHandler(w, request)
 
 	result := w.Result()
 
@@ -73,7 +73,7 @@ func (s *HandlersTestSuite) TestGetShortURLHandler() {
 
 	w := httptest.NewRecorder()
 
-	GetShortURLHandler(w, request)
+	GetShortURLHTTPHandler(w, request)
 
 	result := w.Result()
 
@@ -97,7 +97,7 @@ func (s *HandlersTestSuite) TestAPICreateShortURLHandler() {
 
 	w := httptest.NewRecorder()
 
-	APICreateShortURLHandler(w, request)
+	APICreateShortURLHTTPHandler(w, request)
 
 	result := w.Result()
 
@@ -121,7 +121,7 @@ func (s *HandlersTestSuite) TestAPICreateShortURLBatchHandler() {
 
 	w := httptest.NewRecorder()
 
-	APICreateShortURLBatchHandler(w, request)
+	APICreateShortURLBatchHTTPHandler(w, request)
 
 	result := w.Result()
 
@@ -145,7 +145,7 @@ func (s *HandlersTestSuite) TestGetUserURLSHandler() {
 
 	w := httptest.NewRecorder()
 
-	GetUserURLSHandler(w, request)
+	GetUserURLSHTTPHandler(w, request)
 
 	result := w.Result()
 
